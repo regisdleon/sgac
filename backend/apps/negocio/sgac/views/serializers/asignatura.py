@@ -17,5 +17,7 @@ class AsignaturaSerializer(serializers.ModelSerializer):
             "codigo",
             "anno",
             "semestre",
+            "modalidad",
+            "curriculo",
             "profesores",
         ]

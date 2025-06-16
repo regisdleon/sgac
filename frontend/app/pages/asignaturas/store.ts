@@ -2,6 +2,10 @@
 import type { Subject } from "~/models/Subject";
 import type { Discipline } from "~/models/Discipline";
 import type { Curriculum } from "~/models/Curriculum";
+import { useCareerStore } from "~/stores/career";
+import { useDisciplineStore } from "~/pages/disciplinas/store";
+
+const BACKEND_URL = 'http://localhost:8000';
 
 export const useSubjectStore = defineStore( 'subjectStore', {
   state : () => ( {
@@ -13,31 +17,31 @@ export const useSubjectStore = defineStore( 'subjectStore', {
   
   getters : {
 	getSubjectByCode : ( state ) => ( code : string ) => {
-	  return state.subjects.find( ( s : Subject ) => s.code === code );
+	  return state.subjects.find( ( s : Subject ) => s.codigo === code );
 	},
 	getSubjectsByName : ( state ) => ( name : string ) => {
 	  const lowerName = name.toLowerCase();
 	  return state.subjects.filter( ( s : Subject ) =>
-		s.name.toLowerCase().includes( lowerName )
+		s.nombre.toLowerCase().includes( lowerName )
 	  );
 	},
 	sortedSubjects : ( state ) => {
-	  return [...state.subjects].sort( ( a, b ) => a.name.localeCompare( b.name ) );
+	  return [...state.subjects].sort( ( a, b ) => a.nombre.localeCompare( b.nombre ) );
 	},
-	subjectsByYear : ( state ) => ( year : string ) => {
-	  return state.subjects.filter( s => s.year === year );
+	subjectsByYear : ( state ) => ( anno : number ) => {
+	  return state.subjects.filter( s => s.anno === anno );
 	},
-	subjectsBySemester : ( state ) => ( semester : string ) => {
-	  return state.subjects.filter( s => s.semester === semester );
+	subjectsBySemester : ( state ) => ( semestre : number ) => {
+	  return state.subjects.filter( s => s.semestre === semestre );
 	},
 	subjectsByModality : ( state ) => ( modality : string ) => {
-	  return state.subjects.filter( s => s.modality === modality );
+	  return state.subjects.filter( s => s.modalidad === modality );
 	},
 	subjectsByDiscipline : ( state ) => ( discipline : Discipline ) => {
-	  return state.subjects.filter( s => s.discipline.code === discipline.code );
+	  return state.subjects.filter( s => s.disciplina.id === discipline.id );
 	},
 	subjectsByCurriculum : ( state ) => ( curriculum : Curriculum ) => {
-	  return state.subjects.filter( s => s.curriculum.type === curriculum.type );
+	  return state.subjects.filter( s => s.curriculo === curriculum.type );
 	},
   },
   
@@ -50,14 +54,26 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	  this.error = null;
 	  
 	  try {
-		const { data, error } = await useFetch( '/api/subjects' );
-		
-		if ( error.value ) {
-		  this.error = error.value.message || 'Error fetching subjects';
-		  return;
+		const allSubjects: Subject[] = [];
+		const careerStore = useCareerStore();
+		const disciplineStore = useDisciplineStore();
+
+		await careerStore.fetchCareers(); // Asegurarse de que las carreras estén cargadas
+
+		for (const career of careerStore.careers) {
+		  await disciplineStore.fetchDisciplines(Number(career.id)); // Cargar disciplinas para cada carrera
+
+		  for (const discipline of disciplineStore.disciplines) {
+			const response = await fetch(`${BACKEND_URL}/api/carreras/${career.id}/disciplinas/${discipline.id}/asignaturas`);
+			if (!response.ok) {
+			  const errorData = await response.json();
+			  throw new Error(errorData.message || 'Error fetching subjects for discipline');
+			}
+			const data = await response.json();
+			allSubjects.push(...(data || []));
+		  }
 		}
-		
-		this.subjects = data.value?.subjects || [];
+		this.subjects = allSubjects;
 	  } catch ( err ) {
 		this.error = err instanceof Error ? err.message : 'Error fetching subjects';
 		console.error( 'Error fetching subjects:', err );
@@ -74,15 +90,13 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	  this.error = null;
 	  
 	  try {
-		const { data, error } = await useFetch( `/api/subjects/${ code }` );
-		
-		if ( error.value ) {
-		  this.error = error.value.message || 'Subject not found';
-		  return null;
+		const response = await fetch(`${BACKEND_URL}/api/subjects/${ code }`);
+		if (!response.ok) {
+		  throw new Error('Subject not found');
 		}
-		
-		this.currentSubject = data.value as Subject;
-		return data.value;
+		const data = await response.json();
+		this.currentSubject = data as Subject;
+		return data;
 	  } catch ( err ) {
 		this.error = err instanceof Error ? err.message : 'Error fetching subject';
 		console.error( `Error fetching subject ${ code }:`, err );
@@ -95,25 +109,28 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	/**
 	 * Creates a new subject
 	 */
-	async createSubject( subjectData : Omit<Subject, 'code'> ) {
+	async createSubject( subjectData : Omit<Subject, 'code'> & { carreraId: number, disciplina: number } ) {
 	  this.isLoading = true;
 	  this.error = null;
 	  
 	  try {
-		const { data, error } = await useFetch( '/api/subjects', {
-		  method : 'POST',
-		  body : subjectData
-		} );
+		const { carreraId, disciplina, ...restOfSubjectData } = subjectData;
+		const response = await fetch(`${BACKEND_URL}/api/carreras/${carreraId}/disciplinas/${disciplina}/asignaturas`, {
+		  method: 'POST',
+		  headers: {
+			'Content-Type': 'application/json',
+		  },
+		  body: JSON.stringify(restOfSubjectData)
+		});
 		
-		if ( error.value ) {
-		  this.error = error.value.message || 'Error creating subject';
-		  return null;
+		if (!response.ok) {
+		  const errorData = await response.json();
+		  throw new Error(errorData.message || 'Error creating subject');
 		}
 		
-		if ( data.value ) {
-		  this.subjects.push( data.value as Subject );
-		  return data.value;
-		}
+		const data = await response.json();
+		this.subjects.push(data as Subject);
+		return data;
 	  } catch ( err ) {
 		this.error = err instanceof Error ? err.message : 'Error creating subject';
 		console.error( 'Error creating subject:', err );
@@ -131,27 +148,33 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	  this.error = null;
 	  
 	  try {
-		const { data, error } = await useFetch( `/api/subjects/${ updatedSubject.code }`, {
-		  method : "PATCH",
-		  body : updatedSubject
-		} );
+		const carreraId = updatedSubject.disciplina.carrera.id;
+		const disciplinaId = updatedSubject.disciplina.id;
+		const asignaturaId = updatedSubject.id;
+
+		const response = await fetch(`${BACKEND_URL}/api/carreras/${carreraId}/disciplinas/${disciplinaId}/asignaturas/${asignaturaId}`, {
+		  method: 'PATCH',
+		  headers: {
+			'Content-Type': 'application/json',
+		  },
+		  body: JSON.stringify(updatedSubject)
+		});
 		
-		if ( error.value ) {
-		  this.error = error.value.message || 'Error updating subject';
-		  return null;
+		if (!response.ok) {
+		  const errorData = await response.json();
+		  throw new Error(errorData.message || 'Error updating subject');
 		}
 		
-		if ( data.value ) {
-		  const index = this.subjects.findIndex( s => s.code === updatedSubject.code );
-		  if ( index !== -1 ) {
-			this.subjects[ index ] = data.value as Subject;
-		  }
-		  this.currentSubject = data.value as Subject;
-		  return data.value;
+		const data = await response.json();
+		const index = this.subjects.findIndex( s => s.id === updatedSubject.id );
+		if ( index !== -1 ) {
+		  this.subjects[ index ] = data as Subject;
 		}
+		this.currentSubject = data as Subject;
+		return data;
 	  } catch ( err ) {
 		this.error = err instanceof Error ? err.message : 'Error updating subject';
-		console.error( `Error updating subject ${ updatedSubject.code }:`, err );
+		console.error( `Error updating subject ${ updatedSubject.id }:`, err );
 		return null;
 	  } finally {
 		this.isLoading = false;
@@ -161,31 +184,35 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	/**
 	 * Deletes a subject
 	 */
-	async deleteSubject( code : string ) {
+	async deleteSubject(subjectToDelete: Subject) {
 	  this.isLoading = true;
 	  this.error = null;
 	  
 	  try {
-		const { error } = await useFetch( `/api/subjects/${ code }`, {
-		  method : 'DELETE'
-		} );
+		const carreraId = subjectToDelete.disciplina.carrera.id;
+		const disciplinaId = subjectToDelete.disciplina.id;
+		const asignaturaId = subjectToDelete.id;
 		
-		if ( error.value ) {
-		  this.error = error.value.message || 'Error deleting subject';
-		  return false;
+		const response = await fetch(`${BACKEND_URL}/api/carreras/${carreraId}/disciplinas/${disciplinaId}/asignaturas/${asignaturaId}`, {
+		  method: 'DELETE'
+		});
+		
+		if (!response.ok) {
+		  const errorData = await response.json();
+		  throw new Error(errorData.message || 'Error deleting subject');
 		}
 		
-		this.subjects = this.subjects.filter( s => s.code !== code );
+		this.subjects = this.subjects.filter(s => s.id !== subjectToDelete.id);
 		
 		// If the current subject is the one being deleted, clear it
-		if ( this.currentSubject?.code === code ) {
+		if ( this.currentSubject?.id === subjectToDelete.id ) {
 		  this.currentSubject = null;
 		}
 		
 		return true;
 	  } catch ( err ) {
 		this.error = err instanceof Error ? err.message : 'Error deleting subject';
-		console.error( `Error deleting subject ${ code }:`, err );
+		console.error( `Error deleting subject ${ subjectToDelete.id }:`, err );
 		return false;
 	  } finally {
 		this.isLoading = false;
@@ -219,8 +246,8 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	searchSubjects( query : string ) {
 	  const lowerQuery = query.toLowerCase();
 	  return this.subjects.filter( s =>
-		s.name.toLowerCase().includes( lowerQuery ) ||
-		s.code.toLowerCase().includes( lowerQuery )
+		s.nombre.toLowerCase().includes( lowerQuery ) ||
+		s.codigo.toLowerCase().includes( lowerQuery )
 	  );
 	},
 	

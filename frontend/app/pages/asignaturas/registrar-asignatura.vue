@@ -2,12 +2,17 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from "#ui/types";
 import { useSubjectStore } from "~/pages/asignaturas/store";
+import { useDisciplineStore } from "~/pages/disciplinas/store";
+import { useCareerStore } from "~/stores/career";
+import { onMounted, computed, ref, watch } from 'vue'
 
 definePageMeta( { layout : 'dashboard' } )
 
 const toast = useToast()
 const router = useRouter()
 const subjectStore = useSubjectStore()
+const disciplineStore = useDisciplineStore()
+const careerStore = useCareerStore()
 
 const schema = z.object({
   nombre: z.string().min(1, 'Nombre requerido'),
@@ -20,7 +25,10 @@ const schema = z.object({
   curriculo: z.enum(['BASE', 'PROPIO', 'OPTATIVA', 'ELECTIVA'], {
     required_error: 'Currículo requerido'
   }),
-  disciplina: z.string().min(1, 'Disciplina requerida'),
+  disciplina: z.number({
+    required_error: 'Disciplina requerida',
+    invalid_type_error: 'Debe seleccionar una disciplina'
+  }),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -32,7 +40,7 @@ const state = reactive<SchemaType>({
   semestre: 1,
   modalidad: 'DIURNO',
   curriculo: 'BASE',
-  disciplina: '',
+  disciplina: 0,
 });
 
 const anosAcademicos = [
@@ -62,10 +70,59 @@ const curriculos = [
   { value: 'ELECTIVA', label: 'Electiva' }
 ];
 
+// Computed property para las disciplinas ordenadas
+const disciplinasOrdenadas = computed(() => {
+  const disciplinas = disciplineStore.disciplines || [];
+  return disciplinas.map(disciplina => ({
+    value: disciplina.id,
+    label: `${disciplina.nombre} (${disciplina.carrera.nombre})`,
+    disciplina: disciplina
+  })).sort((a, b) => a.label.localeCompare(b.label));
+});
+
+// Cargar todas las disciplinas al montar el componente
+onMounted(async () => {
+  try {
+    // Primero cargar todas las carreras
+    await careerStore.fetchCareers();
+    console.log('Carreras cargadas:', careerStore.careers);
+    
+    // Luego cargar las disciplinas para cada carrera
+    const allDisciplines = [];
+    for (const carrera of careerStore.careers) {
+      await disciplineStore.fetchDisciplines(carrera.id);
+      allDisciplines.push(...disciplineStore.disciplines);
+    }
+    disciplineStore.disciplines = allDisciplines;
+    console.log('Todas las disciplinas cargadas:', disciplineStore.disciplines);
+  } catch (error) {
+    console.error('Error al cargar datos:', error);
+    toast.add({
+      title: 'Error al cargar los datos',
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'error'
+    });
+  }
+});
+
 // Enviar datos
 async function onSubmit(event: FormSubmitEvent<SchemaType>) {
   console.log('Submitting subject data:', event.data);
-  const result = await subjectStore.createSubject(event.data);
+  const selectedDiscipline = disciplinasOrdenadas.value.find(d => d.value === event.data.disciplina)?.disciplina;
+  
+  if (!selectedDiscipline) {
+    toast.add({
+      title: 'Error: Disciplina no encontrada',
+      color: 'error',
+      icon: 'i-heroicons-exclamation-circle'
+    });
+    return;
+  }
+
+  const result = await subjectStore.createSubject({
+    ...event.data,
+    carreraId: selectedDiscipline.carrera.id
+  });
 
   if (result) {
     toast.add({
@@ -106,6 +163,16 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
       </template>
 
       <div class="flex flex-col space-y-4">
+        <UFormField label="Disciplina" name="disciplina" required>
+          <USelect
+            v-model="state.disciplina"
+            :items="disciplinasOrdenadas"
+            placeholder="Seleccione la disciplina"
+            class="w-full"
+            :loading="disciplineStore.isLoading"
+          />
+        </UFormField>
+
         <UFormField label="Nombre" name="nombre" required>
           <UInput v-model="state.nombre" class="w-full" placeholder="Ej: Matemática I"/>
         </UFormField>
@@ -153,15 +220,6 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
             />
           </UFormField>
         </div>
-
-        <UFormField label="Disciplina" name="disciplina" required>
-          <USelect
-            v-model="state.disciplina"
-            :items="[]"
-            placeholder="Seleccione la disciplina"
-            class="w-full"
-          />
-        </UFormField>
       </div>
 
       <template #footer>

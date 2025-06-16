@@ -4,7 +4,6 @@ from rest_framework.generics import get_object_or_404
 
 from apps.negocio.sgac.models import Asignatura, Carrera, Disciplina
 from apps.negocio.sgac.views.serializers.asignatura import AsignaturaSerializer
-from general.mixins import ObtenerPorMultiplesCamposMixin
 
 
 @extend_schema_view(
@@ -34,16 +33,10 @@ from general.mixins import ObtenerPorMultiplesCamposMixin
     ),
 )
 class AsignaturaViewSet(
-    ObtenerPorMultiplesCamposMixin,
     viewsets.ModelViewSet,
 ):
     queryset = Asignatura.objects.all()
     serializer_class = AsignaturaSerializer
-    multiple_lookup_fields = {
-        "id_carrera": "carrera_id",
-        "id_disciplina": "disciplina_id",
-        "id_asignatura": "pk",
-    }
 
     def get_queryset(self):
         return self.queryset.filter(disciplina=self.obtener_disciplina())
@@ -58,5 +51,18 @@ class AsignaturaViewSet(
             pk=self.kwargs["id_disciplina"],
         )
 
+    def get_object(self):
+        disciplina_obj = self.obtener_disciplina()
+        carrera_obj = self.obtener_carrera()
+
+        obj = get_object_or_404(
+            self.queryset,
+            pk=self.kwargs["id_asignatura"],
+            disciplina=disciplina_obj,
+        )
+        self.check_object_permissions(self.request, obj)
+        return obj
+
     def perform_create(self, serializer):
+        print(f"Validated data before save: {serializer.validated_data}")
         serializer.save(disciplina=self.obtener_disciplina())

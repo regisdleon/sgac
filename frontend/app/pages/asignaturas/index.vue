@@ -23,6 +23,7 @@ function onShowConfirmModalUpdate( value : boolean ) {
 
 onMounted( async () => {
   await subjectStore.fetchSubjects()
+  console.log('Fetched subjects:', subjectStore.subjects);
 } )
 
 const columns : TableColumn<Subject>[] = [
@@ -30,9 +31,21 @@ const columns : TableColumn<Subject>[] = [
   { accessorKey: 'nombre', header: 'Nombre' },
   { accessorKey: 'anno', header: 'Año' },
   { accessorKey: 'semestre', header: 'Semestre' },
-  { accessorKey: 'modalidad', header: 'Modalidad' },
-  { accessorKey: 'curriculo', header: 'Currículo' },
-  { accessorKey: 'disciplina', header: 'Disciplina' },
+  {
+    accessorKey: 'modalidad',
+    header: 'Modalidad',
+    cell: ({ row }) => h('span', row.original.modalidad || 'N/A')
+  },
+  {
+    accessorKey: 'curriculo',
+    header: 'Currículo',
+    cell: ({ row }) => h('span', row.original.curriculo || 'N/A')
+  },
+  {
+    accessorKey: 'disciplina',
+    header: 'Disciplina',
+    cell: ({ row }) => h('span', row.original.disciplina?.nombre || row.original.disciplina)
+  },
   {
     id: 'action',
     header: () => h('div', { class: 'flex justify-end flex-row pr-8' }, 'Acciones'),
@@ -61,16 +74,16 @@ const deleteSubject = async () => {
   if ( !subjectStore.currentSubject?.id ) return
 
   try {
-    const success = await subjectStore.deleteSubject( subjectStore.currentSubject.id )
+    const success = await subjectStore.deleteSubject( subjectStore.currentSubject )
     if ( success ) {
       toast.add( {
-        title : 'Disciplina eliminada correctamente',
+        title : 'Asignatura eliminada correctamente',
         color : 'success',
       } )
     }
   } catch ( e ) {
     toast.add( {
-      title : 'Error al eliminar la disciplina',
+      title : 'Error al eliminar la asignatura',
       color : 'error',
     } )
   } finally {

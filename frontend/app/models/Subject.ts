@@ -3,7 +3,7 @@ import type { Curriculum } from "~/models/Curriculum";
 
 export interface Subject {
   id: string;
-  disciplina: string; // ID de la disciplina
+  disciplina: Discipline; // ID de la disciplina
   nombre: string;
   codigo: string;
   anno: 1 | 2 | 3 | 4 | 5 | 6;
@@ -15,7 +15,20 @@ export interface Subject {
 export const mockSubjects: Subject[] = [
   {
     id: '1',
-    disciplina: '1',
+    disciplina: {
+      id: 1, // o el ID real de una disciplina mock
+      codigo: 'INF',
+      nombre: 'Informática',
+      carrera: {
+        id: "1",
+        nombre: "Ingeniería Informática",
+        modalidad: "CURSO_DIURNO",
+        sede: "Principal",
+        anno_eval_ext: "2025",
+        curso_evaluado: "2024-2025",
+        numero_eval_ext: 1
+      }
+    },
     nombre: 'Programación I',
     codigo: 'INF101',
     anno: 1,
@@ -25,7 +38,20 @@ export const mockSubjects: Subject[] = [
   },
   {
     id: '2',
-    disciplina: '1',
+    disciplina: {
+      id: 2, // o el ID real de otra disciplina mock
+      codigo: 'MAT',
+      nombre: 'Matemática',
+      carrera: {
+        id: "1",
+        nombre: "Ingeniería Informática",
+        modalidad: "CURSO_DIURNO",
+        sede: "Principal",
+        anno_eval_ext: "2025",
+        curso_evaluado: "2024-2025",
+        numero_eval_ext: 1
+      }
+    },
     nombre: 'Programación II',
     codigo: 'INF102',
     anno: 1,
