@@ -60,13 +60,13 @@ const columns : TableColumn<Professors>[] = [
   {
     id: 'annosExperienciaCarrera',
     key: 'annosExperienciaCarrera',
-    header: 'Años Experiencia Carrera',
+    header: 'Experiencia Carrera',
     accessorKey: 'annosExperienciaCarrera'
   },
   {
     id: 'annosExperienciaMes',
     key: 'annosExperienciaMes',
-    header: 'Meses Experiencia Carrera',
+    header: 'Experiencia MES',
     accessorKey: 'annosExperienciaMes'
   },
   {

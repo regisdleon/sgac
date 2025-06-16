@@ -13,8 +13,9 @@ class Profesor(models.Model):
         ATD = "ATD", _("ATD")
 
     class GradoCientifico(models.TextChoices):
-        DOCTOR_EN_CIENCIA = "DOCTOR_EN_CIENCIA"
-        DOCTOR_EN_CIENCIAS = "DOCTOR_EN_CIENCIAS"
+        DOCTOR = "DOCTOR", _("Doctor")
+        MASTER = "MASTER", _("Máster")
+        NINGUNO = "NINGUNO", _("Ninguno")
 
     nombre = models.CharField(max_length=255, db_column="nombre")
     primer_apellido = models.CharField(max_length=255, db_column="primer_apellido")

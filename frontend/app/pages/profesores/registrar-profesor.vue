@@ -19,7 +19,7 @@ const schema = z.object({
   categoriaDocente: z.enum(['INSTRUCTOR', 'ASISTENTE', 'AUXILIAR', 'TITULAR', 'AD', 'ATD'], {
     required_error: 'Categoría docente requerida'
   }),
-  gradoCientifico: z.enum(['DOCTOR_EN_CIENCIA', 'DOCTOR_EN_CIENCIAS'], {
+  gradoCientifico: z.enum(['DOCTOR', 'MASTER', 'NINGUNO'], {
     required_error: 'Grado científico requerido'
   }),
   correos: z.array(z.object({
@@ -41,7 +41,7 @@ const state = reactive<SchemaType>({
   annosExperienciaCarrera: 0,
   annosExperienciaMes: 0,
   categoriaDocente: 'INSTRUCTOR',
-  gradoCientifico: 'DOCTOR_EN_CIENCIA',
+  gradoCientifico: 'DOCTOR',
   correos: [{ etiqueta: 'personal', correo: '' }],
   telefonos: [{ etiqueta: 'personal', numero: '' }]
 });
@@ -56,8 +56,9 @@ const categoriasDocente = [
 ];
 
 const gradosCientificos = [
-  { value: 'DOCTOR_EN_CIENCIA', label: 'Doctor en Ciencia' },
-  { value: 'DOCTOR_EN_CIENCIAS', label: 'Doctor en Ciencias' }
+  { value: 'DOCTOR', label: 'Doctor' },
+  { value: 'MASTER', label: 'Máster' },
+  { value: 'NINGUNO', label: 'Ninguno' }
 ];
 
 async function onSubmit(event: FormSubmitEvent<SchemaType>) {
