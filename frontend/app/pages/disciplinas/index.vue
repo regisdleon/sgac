@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, h, resolveComponent } from 'vue'
+import { ref, onMounted, watch, h, resolveComponent, computed } from 'vue'
 import { useDisciplineStore } from '~/pages/disciplinas/store'
 import { useCareerStore } from '~/stores/career'
 import type { Discipline } from '~/types/discipline'
@@ -20,6 +20,14 @@ const disciplines = ref<Discipline[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const showConfirmModal = ref(false)
+
+// Computed property for career options
+const careerOptions = computed(() => {
+  return careerStore.careers.map(career => ({
+    label: career.nombre,
+    value: career
+  }))
+})
 
 // Columnas de la tabla
 const columns = [
@@ -72,7 +80,9 @@ const columns = [
 // Cargar carreras al montar el componente
 onMounted(async () => {
   try {
+    console.log('Fetching careers...');
     await careerStore.fetchCareers()
+    console.log('Careers after fetch:', careerStore.careers);
   } catch (err) {
     console.error('Error al cargar carreras:', err)
   }
@@ -80,6 +90,7 @@ onMounted(async () => {
 
 // Observar cambios en la carrera seleccionada
 watch(selectedCareer, async (newCareer) => {
+  console.log('Selected career changed:', newCareer);
   if (newCareer) {
     loading.value = true
     error.value = null
@@ -163,11 +174,12 @@ const deleteDiscipline = async () => {
         <UFormGroup label="Carrera">
           <USelect
               v-model="selectedCareer"
-              :options="careerStore.careers"
-              option-attribute="nombre"
-              value-attribute="id"
+              :items="careerOptions"
+              item-attribute="label"
+              value-attribute="value"
               placeholder="Seleccione una carrera"
-              :loading="careerStore.loading"
+              :loading="careerStore.isLoading"
+              class="w-full"
           />
         </UFormGroup>
       </div>
