@@ -31,6 +31,7 @@ const columns : TableColumn<Publication>[] = [
   { accessorKey : 'isbn_issn', header : 'ISBN/ISSN' },
   { accessorKey : 'base_datos_revista', header : 'Base de Datos' },
   { accessorKey : 'nivel', header : 'Nivel' },
+  { accessorKey : 'clasificacion', header : 'Clasificación', cell: ({ row }) => h('span', publicationStore.getClassificationNameById(row.original.clasificacion)) },
   {
     id : 'action',
     header : () => h( 'div', { class : 'flex justify-end flex-row pr-8' }, 'Acciones' ),
@@ -66,14 +67,16 @@ const deletePublication = async () => {
     if ( success ) {
       console.log( success )
       toast.add( {
-        title : `Profesor eliminado`,
+        title : `Publicación eliminada`,
         color : 'success',
+        icon: 'i-heroicons-check-circle-20-solid'
       } )
     }
   } catch ( e ) {
     toast.add( {
       title : `Error al eliminar`,
       color : 'error',
+      icon: 'i-heroicons-exclamation-circle-20-solid'
     } )
   } finally {
     showConfirmModal.value = false
@@ -84,15 +87,16 @@ const deletePublication = async () => {
 
 <template>
   <CustomTable
-      title="Profesores"
+      title="Publicaciones"
       :data="publicationStore.publications || []"
       :columns="columns"
       :error="publicationStore.error"
       empty-text="No hay publicaciones registrados"
       :loading="publicationStore.isLoading"
+      icon="i-heroicons-magnifying-glass-20-solid"
   >
     <template #register-button>
-      <UButton @click="router.push('/publicaciones/registrar-publicacion/')">Registrar publicación</UButton>
+      <UButton @click="router.push('/publicaciones/registrar-publicacion/')" icon="i-heroicons-plus-20-solid">Registrar publicación</UButton>
     </template>
   </CustomTable>
   <ConfirmDeleteModal :open="showConfirmModal" :item="publicationStore.currentPublication?.title || ''"

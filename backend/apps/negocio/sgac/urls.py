@@ -69,7 +69,8 @@ urlpatterns = [
     path("carreras", listar_carreras, name="carrera-list"),
     path("carreras/<int:id_carrera>", detalle_carreras, name="carrera-detail"),
     path("carreras/<int:id_carrera>/disciplinas",listar_disciplinas, name="disciplina-list"),
-    path("carreras/<int:id_carrera>/disciplinas/<int:id_disciplina>",detalle_disciplinas, name="disciplina-detail"),
+    path("disciplinas", listar_disciplinas, name="disciplina-list"),
+    path("disciplinas/<int:id_disciplina>", detalle_disciplinas, name="disciplina-detail"),
     path("carreras/<int:id_carrera>/disciplinas/<int:id_disciplina>/asignaturas",listar_asignatura, name="asignatura-list"),
     path("carreras/<int:id_carrera>/disciplinas/<int:id_disciplina>/asignaturas/<int:id_asignatura>",detalle_asignatura, name="asignatura-detail"),
 ]

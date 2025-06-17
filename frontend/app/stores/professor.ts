@@ -44,7 +44,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 		
 		try {
 		  const config = useRuntimeConfig();
-		  const url = `${config.public.backendBaseUrl}/profesores`;
+		  const url = `/api/profesores`;
 		  console.log('Fetching professors from:', url);
 		  console.log('Config:', config.public);
 
@@ -107,7 +107,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
         this.error = null;
         try {
 		  const config = useRuntimeConfig();
-		  const url = `${config.public.backendBaseUrl}/profesores/${id}`;
+		  const url = `/api/profesores/${id}`;
 		  console.log('Fetching professor by ID from:', url);
 
           const response = await $fetch<Professors>(url);
@@ -146,7 +146,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 		
 		try {
 		  const config = useRuntimeConfig();
-		  const url = `${config.public.backendBaseUrl}/profesores`;
+		  const url = `/api/profesores`;
 		  console.log('Creating professor at:', url);
 
 		  const response = await $fetch<Professors>(url, {
@@ -187,7 +187,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 		
 		try {
 		  const config = useRuntimeConfig();
-		  const url = `${config.public.backendBaseUrl}/profesores/${updatedProfessor.id}`;
+		  const url = `/api/profesores/${updatedProfessor.id}`;
 		  console.log('Updating professor at:', url);
 
 		  const response = await $fetch<Professors>(url, {
@@ -232,7 +232,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 		
 		try {
 		  const config = useRuntimeConfig();
-		  const url = `${config.public.backendBaseUrl}/profesores/${ id }`;
+		  const url = `/api/profesores/${ id }`;
 		  console.log('Deleting professor from:', url);
 
 		  await $fetch(url, {
@@ -269,7 +269,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 		
 		try {
 		  const config = useRuntimeConfig();
-		  const url = `${config.public.backendBaseUrl}/profesores/category/${ category }`;
+		  const url = `/api/profesores/category/${ category }`;
 		  console.log('Fetching professors by category from:', url);
 
 		  const { data, error } = await useFetch( url );

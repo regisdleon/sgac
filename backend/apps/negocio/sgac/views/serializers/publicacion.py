@@ -4,6 +4,9 @@ from apps.negocio.sgac.models.publicacion import Publicacion
 
 
 class PublicacionSerializer(serializers.ModelSerializer):
+    anno = serializers.IntegerField(required=False, allow_null=True)
+    nivel = serializers.IntegerField(required=False, allow_null=True)
+
     class Meta:
         model = Publicacion
         fields = [

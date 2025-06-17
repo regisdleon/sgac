@@ -37,7 +37,7 @@ export const useCareerStore = defineStore( 'careerStore', {
       
       try {
         const config = useRuntimeConfig();
-        const url = `${config.public.backendBaseUrl}/carreras`;
+        const url = `/api/carreras`;
         console.log('Fetching careers from:', url);
         
         const response = await $fetch<Career[]>(url, {
@@ -86,7 +86,7 @@ export const useCareerStore = defineStore( 'careerStore', {
       
       try {
         const config = useRuntimeConfig();
-        const response = await $fetch<Career>(`${config.public.backendBaseUrl}/carreras/${id}`);
+        const response = await $fetch<Career>(`/api/carreras/${id}`);
         this.currentCareer = response;
         return response;
       } catch (err) {
@@ -104,7 +104,7 @@ export const useCareerStore = defineStore( 'careerStore', {
       
       try {
         const config = useRuntimeConfig();
-        const response = await $fetch(`${config.public.backendBaseUrl}/carreras`, {
+        const response = await $fetch(`/api/carreras`, {
           method: 'POST',
           body: careerData
         });
@@ -127,7 +127,7 @@ export const useCareerStore = defineStore( 'careerStore', {
       
       try {
         const config = useRuntimeConfig();
-        const response = await $fetch(`${config.public.backendBaseUrl}/carreras/${updatedCareer.id}`, {
+        const response = await $fetch(`/api/carreras/${updatedCareer.id}`, {
           method: 'PATCH',
           body: updatedCareer
         });
@@ -154,7 +154,7 @@ export const useCareerStore = defineStore( 'careerStore', {
       
       try {
         const config = useRuntimeConfig();
-        await $fetch(`${config.public.backendBaseUrl}/carreras/${id}`, {
+        await $fetch(`/api/carreras/${id}`, {
           method: 'DELETE'
         });
         

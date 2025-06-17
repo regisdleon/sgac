@@ -50,34 +50,53 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch('/api/events')
+		const config = useRuntimeConfig();
+		const url = `${config.public.backendBaseUrl}/api/eventos`;
+		console.log('DEBUG: Backend Base URL:', config.public.backendBaseUrl);
+		console.log('DEBUG: Fetching from URL:', url);
 		
-		if (error.value) {
-		  this.error = error.value.message || 'Error al cargar los eventos'
+		const data = await $fetch(url);
+		
+		console.log('DEBUG: Raw data from $fetch:', data);
+
+		if (!data) {
+		  this.error = 'Error al cargar los eventos: No se recibieron datos'
+		  console.error('Error fetching events: No data received')
 		  return
 		}
 		
-        if (data.value) {
-            let rawEvents: any[] = [];
-            if ('events' in data.value && Array.isArray((data.value as any).events)) {
-                rawEvents = (data.value as any).events;
-            } else if (Array.isArray(data.value)) {
-                rawEvents = data.value as any[];
-            }
-            
-            this.events = rawEvents.map((e: any) => ({
-              id: e.id,
-              anno: e.anno ?? e.year ?? 0,
-              titulo: e.titulo || e.title,
-              titulo_corto: e.titulo_corto || e.short_title || e.shortTitle,
-              clasificacion: e.clasificacion || e.classification?.id || e.classification,
-            }));
-          } else {
-            console.warn('Unexpected data format for events:', data.value);
-            this.events = [];
-          }
-	  } catch (err) {
-		this.error = err instanceof Error ? err.message : 'Error al cargar los eventos'
+		console.log('Raw API response:', data)
+		
+		  let rawEvents: any[] = [];
+		  
+		  // Check if the response has the expected structure
+		  if (Array.isArray(data)) {
+			rawEvents = data as any[];
+		  } else if (data && typeof data === 'object' && 'events' in data) {
+			rawEvents = (data as any).events;
+		  } else {
+			console.warn('Unexpected data format for events:', data);
+			this.events = [];
+			return;
+		  }
+		  
+		  console.log('Raw events before transformation:', rawEvents);
+		  
+		  this.events = rawEvents.map((e: any) => {
+			const event = {
+			  id: e.id,
+			  anno: e.anno ?? e.year ?? 0,
+			  titulo: e.titulo || e.title || '',
+			  titulo_corto: e.tituloCorto || '',
+			  clasificacion: e.clasificacion || e.classification?.id || e.classification || '',
+			};
+			console.log('Transformed event:', event);
+			return event;
+		  });
+		  
+		  console.log('Final transformed events:', this.events);
+		} catch (err) {
+		  this.error = err instanceof Error ? err.message : 'Error al cargar los eventos'
 		console.error('Error fetching events:', err)
 	  } finally {
 		this.isLoading = false
@@ -85,35 +104,40 @@ export const useEventStore = defineStore('eventStore', {
 	},
 	
 	async fetchEventById(id: string) {
+	  console.log(`DEBUG: fetchEventById started for ID: ${id}. Setting isLoading to true.`);
 	  this.isLoading = true
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch(`/api/events/${id}`)
+		const config = useRuntimeConfig();
+		const url = `${config.public.backendBaseUrl}/api/eventos/${id}`;
+		console.log(`DEBUG: fetchEventById fetching from URL: ${url}`);
+		const data = await $fetch(url);
 		
-		if (error.value) {
-		  this.error = error.value.message || 'Evento no encontrado'
+		console.log(`DEBUG: fetchEventById received data:`, data);
+		if (!data) {
+		  this.error = 'Evento no encontrado: No se recibieron datos'
+		  console.warn(`DEBUG: fetchEventById no data for ID: ${id}`);
 		  return null
 		}
 		
-		if (data.value) {
-            const e: any = data.value;
+            const e: any = data;
             const fetchedEvent: Event = {
                 id: e.id,
                 anno: e.anno ?? e.year ?? 0,
                 titulo: e.titulo || e.title,
-                titulo_corto: e.titulo_corto || e.short_title || e.shortTitle,
+                titulo_corto: e.tituloCorto,
                 clasificacion: e.clasificacion || e.classification?.id || e.classification,
             };
 		  this.currentEvent = fetchedEvent;
+		  console.log(`DEBUG: fetchEventById successful for ID: ${id}. currentEvent set.`);
 		  return fetchedEvent;
-        }
-        return null;
-	  } catch (err) {
+        } catch (err) {
 		this.error = err instanceof Error ? err.message : 'Error al obtener el evento'
-		console.error(`Error fetching event ${id}:`, err)
+		console.error(`DEBUG: Error in fetchEventById for ID ${id}:`, err)
 		return null
 	  } finally {
+		console.log(`DEBUG: fetchEventById finally block reached for ID: ${id}. Setting isLoading to false.`);
 		this.isLoading = false
 	  }
 	},
@@ -123,7 +147,9 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch('/api/events', {
+		const config = useRuntimeConfig();
+		const url = `${config.public.backendBaseUrl}/api/eventos`;
+		const data = await $fetch(url, {
 		  method: 'POST',
 		  body: {
 			...eventData,
@@ -131,25 +157,22 @@ export const useEventStore = defineStore('eventStore', {
 		  }
 		})
 		
-		if (error.value) {
-		  this.error = error.value.message || 'Error al crear el evento'
+		if (!data) {
+		  this.error = 'Error al crear el evento: No se recibieron datos'
 		  return null
 		}
 		
-		if (data.value) {
-            const e: any = data.value;
+            const e: any = data;
             const newEvent: Event = {
                 id: e.id,
                 anno: e.anno ?? e.year ?? 0,
                 titulo: e.titulo || e.title,
-                titulo_corto: e.titulo_corto || e.short_title || e.shortTitle,
+                titulo_corto: e.tituloCorto,
                 clasificacion: e.clasificacion || e.classification?.id || e.classification,
             };
 		  this.events.push(newEvent);
 		  return newEvent;
-		}
-        return null;
-	  } catch (err) {
+		} catch (err) {
 		this.error = err instanceof Error ? err.message : 'Error al crear el evento'
 		console.error('Error creating event:', err)
 		return null
@@ -163,33 +186,32 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch(`/api/events/${updatedEvent.id}`, {
-		  method: 'PATCH',
+		const config = useRuntimeConfig();
+		const url = `${config.public.backendBaseUrl}/api/eventos/${updatedEvent.id}`;
+		const data = await $fetch(url, {
+		  method: 'PUT',
 		  body: updatedEvent
 		})
 		
-		if (error.value) {
-		  this.error = error.value.message || 'Error al actualizar el evento'
+		if (!data) {
+		  this.error = 'Error al actualizar el evento: No se recibieron datos'
 		  return null
 		}
 		
-		if (data.value) {
-            const e: any = data.value;
-            const updated: Event = {
-                id: e.id,
-                anno: e.anno ?? e.year ?? 0,
-                titulo: e.titulo || e.title,
-                titulo_corto: e.titulo_corto || e.short_title || e.shortTitle,
-                clasificacion: e.clasificacion || e.classification?.id || e.classification,
-            };
-		  const index = this.events.findIndex(e => e.id === updated.id)
-		  if (index !== -1) {
-			this.events[index] = updated;
-		  }
-		  this.currentEvent = updated;
-		  return updated;
+		const e: any = data;
+		const updated: Event = {
+		  id: e.id,
+		  anno: e.anno ?? e.year ?? 0,
+		  titulo: e.titulo || e.title,
+		  titulo_corto: e.tituloCorto,
+		  clasificacion: e.clasificacion || e.classification?.id || e.classification,
+		};
+		const index = this.events.findIndex(e => e.id === updated.id)
+		if (index !== -1) {
+		  this.events[index] = updated;
 		}
-        return null;
+		this.currentEvent = updated;
+		return updated;
 	  } catch (err) {
 		this.error = err instanceof Error ? err.message : 'Error al actualizar el evento'
 		console.error(`Error updating event ${updatedEvent.id}:`, err)
@@ -204,12 +226,14 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { error } = await useFetch(`/api/events/${id}`, {
+		const config = useRuntimeConfig();
+		const url = `${config.public.backendBaseUrl}/api/eventos/${id}`;
+		const data = await $fetch(url, {
 		  method: 'DELETE'
 		})
 		
-		if (error.value) {
-		  this.error = error.value.message || 'Error al eliminar el evento'
+		if (!data) {
+		  this.error = 'Error al eliminar el evento: No se recibieron datos'
 		  return false
 		}
 		

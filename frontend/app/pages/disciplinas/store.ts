@@ -36,7 +36,7 @@ export const useDisciplineStore = defineStore( 'disciplineStore', {
 
 	  try {
 		const config = useRuntimeConfig();
-		const url = `${config.public.backendBaseUrl}/carreras/${carreraId}/disciplinas`;
+		const url = `/api/carreras/${carreraId}/disciplinas`;
 
 		console.log('Fetching disciplines from:', url);
 
@@ -81,7 +81,7 @@ export const useDisciplineStore = defineStore( 'disciplineStore', {
 	  
 	  try {
 		const config = useRuntimeConfig();
-		const response = await $fetch<Discipline>(`${config.public.backendBaseUrl}/carreras/${carreraId}/disciplinas/${id}`);
+		const response = await $fetch<Discipline>(`/api/carreras/${carreraId}/disciplinas/${id}`);
 		this.currentDiscipline = response;
 		return response;
 	  } catch ( err: any ) {
@@ -102,7 +102,7 @@ export const useDisciplineStore = defineStore( 'disciplineStore', {
 	  
 	  try {
 		const config = useRuntimeConfig();
-		const url = `${config.public.backendBaseUrl}/carreras/${carreraId}/disciplinas`;
+		const url = `/api/carreras/${carreraId}/disciplinas`;
 		console.log('Sending discipline data to:', url, disciplineData);
 
 		const response = await $fetch( url, {
@@ -154,7 +154,7 @@ export const useDisciplineStore = defineStore( 'disciplineStore', {
 	  
 	  try {
 		const config = useRuntimeConfig();
-		const response = await $fetch<Discipline>(`${config.public.backendBaseUrl}/carreras/${carreraId}/disciplinas/${ updatedDiscipline.id }`, {
+		const response = await $fetch<Discipline>(`/api/carreras/${carreraId}/disciplinas/${ updatedDiscipline.id }`, {
 		  method : 'PATCH',
 		  body : updatedDiscipline,
 		  headers: {
@@ -195,7 +195,7 @@ export const useDisciplineStore = defineStore( 'disciplineStore', {
 	  
 	  try {
 		const config = useRuntimeConfig();
-		const url = `${config.public.backendBaseUrl}/carreras/${carreraId}/disciplinas/${id}`;
+		const url = `/api/carreras/${carreraId}/disciplinas/${id}`;
 		console.log('Deleting discipline from:', url);
 
 		await $fetch( url, {

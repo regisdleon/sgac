@@ -21,27 +21,18 @@ function onShowConfirmModalUpdate( value : boolean ) {
   }
 }
 
-onMounted( async () => {
-  await eventStore.fetchEvents()
-} )
-
-onActivated(async () => {
-  await eventStore.fetchEvents();
-});
+const { pending, error } = useAsyncData(
+  'events',
+  async () => {
+    await eventStore.fetchEvents();
+  },
+  { server: true } // Fetch on server and client
+);
 
 const columns : TableColumn<Event>[] = [
   { accessorKey : 'anno', header : 'Año' },
   { accessorKey : 'titulo', header : 'Título' },
-  {
-    id: 'titulo_corto',
-    key: 'titulo_corto',
-    header: 'Título Corto',
-    cell: ({ row }) => {
-      console.log('Row data for titulo_corto:', row.original);
-      console.log('titulo_corto value:', row.original?.titulo_corto);
-      return row.original?.titulo_corto || 'N/A';
-    }
-  },
+  { accessorKey : 'titulo_corto', header : 'Título Corto' },
   {
     id: 'clasificacion',
     key: 'clasificacion',
@@ -68,7 +59,7 @@ const columns : TableColumn<Event>[] = [
             size : 'xs',
             onClick : () => {
               eventStore.currentEvent = row.original
-              router.push( `/eventos/actualizar-evento/${row.original.id}` )
+              router.push( `/eventos/${row.original.id}` )
             }
           }, { default : () => 'Editar' } ),
 

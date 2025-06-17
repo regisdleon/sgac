@@ -64,7 +64,7 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 		  await disciplineStore.fetchDisciplines(Number(career.id)); // Cargar disciplinas para cada carrera
 
 		  for (const discipline of disciplineStore.disciplines) {
-			const response = await fetch(`${BACKEND_URL}/api/carreras/${career.id}/disciplinas/${discipline.id}/asignaturas`);
+			const response = await fetch(`/api/carreras/${career.id}/disciplinas/${discipline.id}/asignaturas`);
 			if (!response.ok) {
 			  const errorData = await response.json();
 			  throw new Error(errorData.message || 'Error fetching subjects for discipline');
@@ -90,7 +90,7 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	  this.error = null;
 	  
 	  try {
-		const response = await fetch(`${BACKEND_URL}/api/subjects/${ code }`);
+		const response = await fetch(`/api/subjects/${ code }`);
 		if (!response.ok) {
 		  throw new Error('Subject not found');
 		}
@@ -115,7 +115,7 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 	  
 	  try {
 		const { carreraId, disciplina, ...restOfSubjectData } = subjectData;
-		const response = await fetch(`${BACKEND_URL}/api/carreras/${carreraId}/disciplinas/${disciplina}/asignaturas`, {
+		const response = await fetch(`/api/carreras/${carreraId}/disciplinas/${disciplina}/asignaturas`, {
 		  method: 'POST',
 		  headers: {
 			'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 		const disciplinaId = updatedSubject.disciplina.id;
 		const asignaturaId = updatedSubject.id;
 
-		const response = await fetch(`${BACKEND_URL}/api/carreras/${carreraId}/disciplinas/${disciplinaId}/asignaturas/${asignaturaId}`, {
+		const response = await fetch(`/api/carreras/${carreraId}/disciplinas/${disciplinaId}/asignaturas/${asignaturaId}`, {
 		  method: 'PATCH',
 		  headers: {
 			'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export const useSubjectStore = defineStore( 'subjectStore', {
 		const disciplinaId = subjectToDelete.disciplina.id;
 		const asignaturaId = subjectToDelete.id;
 		
-		const response = await fetch(`${BACKEND_URL}/api/carreras/${carreraId}/disciplinas/${disciplinaId}/asignaturas/${asignaturaId}`, {
+		const response = await fetch(`/api/carreras/${carreraId}/disciplinas/${disciplinaId}/asignaturas/${asignaturaId}`, {
 		  method: 'DELETE'
 		});
 		

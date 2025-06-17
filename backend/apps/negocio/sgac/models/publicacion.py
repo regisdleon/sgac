@@ -21,10 +21,24 @@ class PublicacionClasificacion(models.Model):
 
 
 class Publicacion(models.Model):
+    TIPO_CHOICES = [
+        ('articulo', 'Artículo'),
+        ('libro', 'Libro'),
+        ('libro_digital', 'Libro Digital'),
+        ('capitulo_libro', 'Capítulo de Libro'),
+        ('texto_carrera', 'Texto de la Carrera'),
+        ('material_docente', 'Material Docente Interno'),
+        ('patente', 'Patente'),
+    ]
+
     anno = models.IntegerField(db_column="anno")
     titulo = models.CharField(db_column="titulo", max_length=500)
     revista_editorial = models.CharField(db_column="revista_editorial", max_length=500)
-    tipo_publicacion = models.CharField(db_column="tipo_publicacion", max_length=500)
+    tipo_publicacion = models.CharField(
+        db_column="tipo_publicacion",
+        max_length=500,
+        choices=TIPO_CHOICES
+    )
     isbn_issn = models.CharField(db_column="isbn_issn", max_length=500)
     verificacion_libro = models.CharField(db_column="verificacion_libro")
     base_datos_revista = models.CharField(
@@ -32,11 +46,6 @@ class Publicacion(models.Model):
     )
     verificacion_referencia = models.CharField(db_column="verificacion_referencia")
     nivel = models.IntegerField(db_column="nivel")
-    clasificacion = models.ForeignKey(
-        PublicacionClasificacion,
-        models.CASCADE,
-        db_column="id_clasificacion",
-    )
 
     def __str__(self):
         return self.titulo

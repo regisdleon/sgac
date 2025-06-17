@@ -3,7 +3,7 @@ import { process } from "std-env";
 export default defineNuxtConfig( {
   runtimeConfig : {
 	public : {
-	  backendBaseUrl : process.env.BACKEND_BASE_URL || 'http://127.0.0.1:8000/api',
+	  backendBaseUrl : process.env.BACKEND_BASE_URL || 'http://127.0.0.1:8000',
 	},
 	backendApiKey : process.env.BACKEND_API_KEY || '', // Solo en servidor
   },
@@ -20,5 +20,15 @@ export default defineNuxtConfig( {
   ui : {
 	colorMode : false,
 	theme : {},
-  }
+  },
+  vite: {
+    server: {
+      proxy: {
+        '/api/': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
+      },
+    },
+  },
 } );

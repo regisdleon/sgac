@@ -9,39 +9,40 @@ const toast = useToast()
 const router = useRouter()
 const publicationStore = usePublicationStore()
 
-const schema = z.object( {
-  id : z.string().optional(),
-  year : z.string().min( 4, 'Debe ser un año válido' ).max( 4 ),
-  title : z.string().min( 5, 'Título demasiado corto' ),
-  editorial : z.string().min( 2, 'Editorial requerida' ),
-  type : z.string().min( 1, 'Tipo requerido' ),
-  isbnIssn : z.string().min( 5, 'ISBN/ISSN requerido' ),
-  dataBase : z.string().min( 1, 'Base de datos requerida' ),
-  verificationReference : z.string().min( 5, 'Referencia requerida' ),
-  level : z.string().min( 1, 'Nivel requerido' ),
-} )
+const schema = z.object({
+  id: z.string().optional(),
+  anno: z.string().min(4, 'Debe ser un año válido').max(4),
+  titulo: z.string().min(5, 'Título demasiado corto'),
+  revista_editorial: z.string().min(2, 'Editorial requerida'),
+  tipo_publicacion: z.string().min(1, 'Tipo requerido'),
+  isbn_issn: z.string().min(5, 'ISBN/ISSN requerido'),
+  base_datos_revista: z.string().min(1, 'Base de datos requerida'),
+  verificacion_referencia: z.string().min(5, 'Referencia requerida'),
+  nivel: z.string().min(1, 'Nivel requerido'),
+})
 
 type SchemaType = z.infer<typeof schema>;
 
-const state = reactive<SchemaType>( {
-  year : publicationStore.currentPublication?.year!,
-  title : publicationStore.currentPublication?.title!,
-  editorial : publicationStore.currentPublication?.editorial!,
-  type : publicationStore.currentPublication?.type!,
-  isbnIssn : publicationStore.currentPublication?.isbnIssn!,
-  dataBase : publicationStore.currentPublication?.dataBase!,
-  verificationReference : publicationStore.currentPublication?.verificationReference!,
-  level : publicationStore.currentPublication?.level!,
-} )
+const state = reactive<SchemaType>({
+  anno: publicationStore.currentPublication?.anno?.toString() || '',
+  titulo: publicationStore.currentPublication?.titulo || '',
+  revista_editorial: publicationStore.currentPublication?.revista_editorial || '',
+  tipo_publicacion: publicationStore.currentPublication?.tipo_publicacion || '',
+  isbn_issn: publicationStore.currentPublication?.isbn_issn || '',
+  base_datos_revista: publicationStore.currentPublication?.base_datos_revista || '',
+  verificacion_referencia: publicationStore.currentPublication?.verificacion_referencia || '',
+  nivel: publicationStore.currentPublication?.nivel?.toString() || '',
+})
 
 // Opciones para los selects
 const publicationTypes = [
-  'Libro',
-  'Artículo de revista',
-  'Artículo de conferencia',
-  'Capítulo de libro',
-  'Reporte técnico',
-  'Tesis'
+  { label: 'Artículo', value: 'articulo' },
+  { label: 'Libro', value: 'libro' },
+  { label: 'Libro Digital', value: 'libro_digital' },
+  { label: 'Capítulo de Libro', value: 'capitulo_libro' },
+  { label: 'Texto de la Carrera', value: 'texto_carrera' },
+  { label: 'Material Docente Interno', value: 'material_docente' },
+  { label: 'Patente', value: 'patente' }
 ]
 
 const databaseOptions = [
@@ -64,22 +65,22 @@ const levelOptions = [
 ]
 
 // Enviar datos
-async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
-  const result = await publicationStore.createPublication( event.data )
+async function onSubmit(event: FormSubmitEvent<SchemaType>) {
+  const result = await publicationStore.updatePublication(event.data)
 
-  if ( result ) {
-    toast.add( {
-      title : 'Publicación registrada',
-      description : 'La publicación se ha guardado correctamente',
-      color : 'success'
-    } )
-    router.push( '/publicaciones' ) // Redirigir a la lista
+  if (result) {
+    toast.add({
+      title: 'Publicación actualizada',
+      description: 'La publicación se ha actualizado correctamente',
+      color: 'success'
+    })
+    router.push('/publicaciones') // Redirigir a la lista
   } else {
-    toast.add( {
-      title : 'Error',
-      description : publicationStore.error || 'Error al registrar la publicación',
-      color : 'error',
-    } )
+    toast.add({
+      title: 'Error',
+      description: publicationStore.error || 'Error al actualizar la publicación',
+      color: 'error',
+    })
   }
 }
 </script>
@@ -105,14 +106,14 @@ async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
         <!-- Título y Año -->
         <div class="grid grid-cols-3 w-full gap-4">
 
-          <UFormField class="w-full col-span-2" label="Título" name="title" required>
-            <UInput class="w-full" v-model="state.title" placeholder="Título completo de la publicación"/>
+          <UFormField class="w-full col-span-2" label="Título" name="titulo" required>
+            <UInput class="w-full" v-model="state.titulo" placeholder="Título completo de la publicación"/>
           </UFormField>
 
-          <UFormField class="w-full col-span-1" label="Año" name="year" required>
+          <UFormField class="w-full col-span-1" label="Año" name="anno" required>
             <UInput
                 class="w-full"
-                v-model="state.year"
+                v-model="state.anno"
                 type="number"
                 min="1900"
                 :max="new Date().getFullYear()"
@@ -124,13 +125,13 @@ async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
         <div class="grid grid-cols-2 w-full gap-4">
 
           <!-- Editorial y Tipo -->
-          <UFormField label="Editorial" name="editorial" required>
-            <UInput class="w-full" v-model="state.editorial" placeholder="Nombre de la editorial"/>
+          <UFormField label="Editorial" name="revista_editorial" required>
+            <UInput class="w-full" v-model="state.revista_editorial" placeholder="Nombre de la editorial"/>
           </UFormField>
 
-          <UFormField label="Tipo de publicación" name="type" required>
+          <UFormField label="Tipo de publicación" name="tipo_publicacion" required>
             <USelect class="w-full"
-                     v-model="state.type"
+                     v-model="state.tipo_publicacion"
                      :items="publicationTypes"
                      placeholder="Seleccione el tipo"
             />
@@ -138,26 +139,26 @@ async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
 
         </div>
         <!-- ISBN/ISSN y Base de datos -->
-        <UFormField label="ISBN/ISSN" name="isbnIssn" required>
-          <UInput class="w-full" v-model="state.isbnIssn" placeholder="Identificador único"/>
+        <UFormField label="ISBN/ISSN" name="isbn_issn" required>
+          <UInput class="w-full" v-model="state.isbn_issn" placeholder="Identificador único"/>
         </UFormField>
 
-        <UFormField label="Base de datos" name="dataBase" required>
+        <UFormField label="Base de datos" name="base_datos_revista" required>
           <USelect class="w-full"
-                   v-model="state.dataBase"
+                   v-model="state.base_datos_revista"
                    :items="databaseOptions"
                    placeholder="Seleccione la base"
           />
         </UFormField>
 
         <!-- Referencia y Nivel -->
-        <UFormField label="Referencia de verificación" name="verificationReference" required>
-          <UInput class="w-full" v-model="state.verificationReference" placeholder="DOI, URL o referencia"/>
+        <UFormField label="Referencia de verificación" name="verificacion_referencia" required>
+          <UInput class="w-full" v-model="state.verificacion_referencia" placeholder="DOI, URL o referencia"/>
         </UFormField>
 
-        <UFormField label="Nivel de indexación" name="level" required>
+        <UFormField label="Nivel de indexación" name="nivel" required>
           <USelect class="w-full"
-                   v-model="state.level"
+                   v-model="state.nivel"
                    :items="levelOptions"
                    placeholder="Seleccione el nivel"
           />
