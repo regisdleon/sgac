@@ -13,14 +13,13 @@ const schema = z.object({
   id: z.string().optional(),
   anno: z.number().min(1900, 'Debe ser un año válido').max(new Date().getFullYear(), 'El año no puede ser en el futuro'),
   titulo: z.string().min(5, 'Título demasiado corto'),
-  revista_editorial: z.string().min(2, 'Editorial requerida'),
-  tipo_publicacion: z.string().min(1, 'Tipo requerido'),
-  isbn_issn: z.string().min(5, 'ISBN/ISSN requerido'),
-  verificacion_libro: z.string().min(1, 'Verificación de libro requerida'),
-  base_datos_revista: z.string().min(1, 'Base de datos requerida'),
-  verificacion_referencia: z.string().min(1, 'Referencia requerida'),
-  nivel: z.number().min(0, 'Nivel requerido'),
-  clasificacion: z.string().min(1, 'Clasificación requerida'),
+  revistaEditorial: z.string().min(2, 'Editorial requerida'),
+  tipoPublicacion: z.string().min(1, 'Tipo requerido'),
+  isbnIssn: z.string().min(5, 'ISBN/ISSN requerido'),
+  verificacionLibro: z.string().min(1, 'Verificación de libro requerida'),
+  baseDatosRevista: z.string().min(1, 'Base de datos requerida'),
+  verificacionReferencia: z.string().min(1, 'Referencia requerida'),
+  nivel: z.number().min(1, 'Nivel mínimo es 1').max(4, 'Nivel máximo es 4'),
 })
 
 type SchemaType = z.infer<typeof schema>;
@@ -28,14 +27,13 @@ type SchemaType = z.infer<typeof schema>;
 const state = reactive<SchemaType>({
   anno: new Date().getFullYear(),
   titulo: '',
-  revista_editorial: '',
-  tipo_publicacion: '',
-  isbn_issn: '',
-  base_datos_revista: '',
-  verificacion_libro: '',
-  verificacion_referencia: '',
+  revistaEditorial: '',
+  tipoPublicacion: '',
+  isbnIssn: '',
+  baseDatosRevista: '',
+  verificacionLibro: '',
+  verificacionReferencia: '',
   nivel: 1,
-  clasificacion: '',
 })
 
 onMounted(async () => {
@@ -53,23 +51,11 @@ const publicationTypes = [
   { label: 'Patente', value: 'patente' }
 ]
 
-const databaseOptions = [
-  'Scopus',
-  'Web of Science',
-  'IEEE Xplore',
-  'Springer Link',
-  'ScienceDirect',
-  'SciELO',
-  'Google Scholar',
-  'Otro'
-]
-
 const levelOptions = [
-  { label: 'Q1', value: 1 },
-  { label: 'Q2', value: 2 },
-  { label: 'Q3', value: 3 },
-  { label: 'Q4', value: 4 },
-  { label: 'No indexado', value: 0 }
+  { label: 'Nivel 1', value: 1 },
+  { label: 'Nivel 2', value: 2 },
+  { label: 'Nivel 3', value: 3 },
+  { label: 'Nivel 4', value: 4 }
 ]
 
 // Enviar datos
@@ -138,13 +124,13 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
 
         <div class="grid grid-cols-2 w-full gap-4">
           <!-- Editorial y Tipo -->
-          <UFormField label="Editorial" name="revista_editorial" required>
-            <UInput class="w-full" v-model="state.revista_editorial" placeholder="Nombre de la editorial"/>
+          <UFormField label="Editorial" name="revistaEditorial" required>
+            <UInput class="w-full" v-model="state.revistaEditorial" placeholder="Nombre de la editorial"/>
           </UFormField>
 
-          <UFormField label="Tipo de publicación" name="tipo_publicacion" required>
+          <UFormField label="Tipo de publicación" name="tipoPublicacion" required>
             <USelect class="w-full"
-                     v-model="state.tipo_publicacion"
+                     v-model="state.tipoPublicacion"
                      :items="publicationTypes"
                      placeholder="Seleccione el tipo"
                      icon="i-heroicons-chevron-down-20-solid"
@@ -153,42 +139,28 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
         </div>
 
         <!-- ISBN/ISSN y Base de datos -->
-        <UFormField label="ISBN/ISSN" name="isbn_issn" required>
-          <UInput class="w-full" v-model="state.isbn_issn" placeholder="Identificador único"/>
+        <UFormField label="ISBN/ISSN" name="isbnIssn" required>
+          <UInput class="w-full" v-model="state.isbnIssn" placeholder="Identificador único"/>
         </UFormField>
 
-        <UFormField label="Verificación de libro" name="verificacion_libro" required>
-          <UInput class="w-full" v-model="state.verificacion_libro" placeholder="Verificación del libro"/>
+        <UFormField label="Verificación de libro" name="verificacionLibro" required>
+          <UInput class="w-full" v-model="state.verificacionLibro" placeholder="Verificación del libro"/>
         </UFormField>
 
-        <UFormField label="Base de datos" name="base_datos_revista" required>
-          <USelect class="w-full"
-                   v-model="state.base_datos_revista"
-                   :items="databaseOptions"
-                   placeholder="Seleccione la base"
-                   icon="i-heroicons-chevron-down-20-solid"
-          />
+        <UFormField label="Base de datos" name="baseDatosRevista" required>
+          <UInput class="w-full" v-model="state.baseDatosRevista" placeholder="Nombre de la base de datos"/>
         </UFormField>
 
         <!-- Referencia y Nivel -->
-        <UFormField label="Referencia de verificación" name="verificacion_referencia" required>
-          <UInput class="w-full" v-model="state.verificacion_referencia" placeholder="DOI, URL o referencia"/>
+        <UFormField label="Referencia de verificación" name="verificacionReferencia" required>
+          <UInput class="w-full" v-model="state.verificacionReferencia" placeholder="DOI, URL o referencia"/>
         </UFormField>
 
-        <UFormField label="Nivel de indexación" name="nivel" required>
+        <UFormField label="Nivel" name="nivel" required>
           <USelect class="w-full"
                    v-model.number="state.nivel"
                    :items="levelOptions"
                    placeholder="Seleccione el nivel"
-                   icon="i-heroicons-chevron-down-20-solid"
-          />
-        </UFormField>
-
-        <UFormField label="Clasificación" name="clasificacion" required>
-          <USelect class="w-full"
-                   v-model="state.clasificacion"
-                   :items="publicationStore.classifications.map(c => ({ label: c.nombre, value: c.id }))"
-                   placeholder="Seleccione la clasificación"
                    icon="i-heroicons-chevron-down-20-solid"
           />
         </UFormField>

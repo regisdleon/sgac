@@ -1,5 +1,6 @@
 // stores/publication.ts
 import type { Publication, PublicationClassification } from "~/models/Publication";
+import { z } from "zod";
 
 interface PublicationState {
   publications: Publication[];
@@ -8,6 +9,19 @@ interface PublicationState {
   error: string | null;
   classifications: PublicationClassification[];
 }
+
+const schema = z.object({
+  id: z.string().optional(),
+  anno: z.number().min(1900, 'Debe ser un año válido').max(new Date().getFullYear(), 'El año no puede ser en el futuro'),
+  titulo: z.string().min(5, 'Título demasiado corto'),
+  revistaEditorial: z.string().min(2, 'Editorial requerida'),
+  tipoPublicacion: z.string().min(1, 'Tipo requerido'),
+  isbnIssn: z.string().min(5, 'ISBN/ISSN requerido'),
+  verificacionLibro: z.string().min(1, 'Verificación de libro requerida'),
+  baseDatosRevista: z.string().min(1, 'Base de datos requerida'),
+  verificacionReferencia: z.string().min(1, 'Referencia requerida'),
+  nivel: z.number().min(1, 'Nivel mínimo es 1').max(4, 'Nivel máximo es 4'),
+})
 
 export const usePublicationStore = defineStore( 'publicationStore', {
   state : (): PublicationState => ( {
@@ -26,13 +40,13 @@ export const usePublicationStore = defineStore( 'publicationStore', {
 	  return state.publications.filter( p => p.anno.toString() === year );
 	},
 	getPublicationsByType : ( state : PublicationState ) => ( type : string ) => {
-	  return state.publications.filter( p => p.tipo_publicacion === type );
+	  return state.publications.filter( p => p.tipoPublicacion === type );
 	},
 	getPublicationsByLevel : ( state : PublicationState ) => ( level : string ) => {
 	  return state.publications.filter( p => p.nivel.toString() === level );
 	},
 	getPublicationsByDatabase : ( state : PublicationState ) => ( database : string ) => {
-	  return state.publications.filter( p => p.base_datos_revista === database );
+	  return state.publications.filter( p => p.baseDatosRevista === database );
 	},
 	getClassificationNameById: (state) => (id: string) => {
 	  return state.classifications.find(c => c.id === id)?.nombre || 'Desconocido';
@@ -60,17 +74,38 @@ export const usePublicationStore = defineStore( 'publicationStore', {
 	async fetchPublications() {
 	  this.isLoading = true;
 	  this.error = null;
-	  
+
 	  try {
-		const { data, error } = await useFetch<Publication[]>('/api/publicaciones/');
-		
+		const { data, error } = await useFetch('/api/publicaciones/');
+
 		if (error.value) {
 		  this.error = error.value.message || 'Error al cargar publicaciones';
-		} else {
-		  this.publications = data.value || [];
+		  this.publications = [];
+		  return;
 		}
+
+		if (!Array.isArray(data.value)) {
+		  this.publications = [];
+		  return;
+		}
+
+		const publicationsArray: any[] = Array.isArray(data.value) ? data.value : [];
+		this.publications = publicationsArray.map((pub: any) => ({
+		  id: pub.id,
+		  anno: pub.anno,
+		  titulo: pub.titulo,
+		  revistaEditorial: pub.revistaEditorial,
+		  tipoPublicacion: pub.tipoPublicacion,
+		  isbnIssn: pub.isbnIssn,
+		  verificacionLibro: pub.verificacionLibro,
+		  baseDatosRevista: pub.baseDatosRevista,
+		  verificacionReferencia: pub.verificacionReferencia,
+		  nivel: pub.nivel,
+		  clasificacion: '', // Default value for compatibility
+		}));
 	  } catch (err) {
 		this.error = 'Error de conexión con el servidor';
+		this.publications = [];
 		console.error('Error inesperado:', err);
 	  } finally {
 		this.isLoading = false;
@@ -139,23 +174,34 @@ export const usePublicationStore = defineStore( 'publicationStore', {
 	  this.error = null;
 	  
 	  try {
-		const { data, error } = await useFetch<Publication>(`/api/publicaciones/${updatedPublication.id}`, {
-		  method: 'PUT',
+		const d = await $fetch<Publication>(`/api/publicaciones/${updatedPublication.id}`, {
+		  method: 'PATCH',
 		  body: updatedPublication,
 		});
 		
-		if (error.value) {
-		  this.error = error.value.message || 'Error al actualizar publicación';
-		} else if (data.value) {
+		if (d) {
+		  const mapped = {
+			id: d.id,
+			anno: d.anno,
+			titulo: d.titulo,
+			revistaEditorial: d.revistaEditorial,
+			tipoPublicacion: d.tipoPublicacion,
+			isbnIssn: d.isbnIssn,
+			verificacionLibro: d.verificacionLibro,
+			baseDatosRevista: d.baseDatosRevista,
+			verificacionReferencia: d.verificacionReferencia,
+			nivel: d.nivel,
+			clasificacion: d.clasificacion || '',
+		  };
 		  const index = this.publications.findIndex(p => p.id === updatedPublication.id);
 		  if (index !== -1) {
-			this.publications[index] = data.value;
+			this.publications[index] = mapped;
 		  }
-		  return data.value;
+		  return mapped;
 		}
-	  } catch (err) {
-		this.error = 'Error de red al actualizar';
-		console.error('Error inesperado:', err);
+		return null;
+	  } catch (err: any) {
+		this.error = err?.message || 'Error al actualizar la publicación';
 		return null;
 	  } finally {
 		this.isLoading = false;
@@ -235,6 +281,38 @@ export const usePublicationStore = defineStore( 'publicationStore', {
 		this.error = err instanceof Error ? err.message : 'Error en la búsqueda';
 		console.error('Error searching publications:', err);
 		return [];
+	  } finally {
+		this.isLoading = false;
+	  }
+	},
+	
+	/**
+	 * Obtiene una publicación por ID
+	 */
+	async fetchPublicationById(id: string) {
+	  this.isLoading = true;
+	  this.error = null;
+	  try {
+		const d = await $fetch<Publication>(`/api/publicaciones/${id}`);
+		if (d) {
+		  return {
+			id: d.id,
+			anno: d.anno,
+			titulo: d.titulo,
+			revistaEditorial: d.revistaEditorial,
+			tipoPublicacion: d.tipoPublicacion,
+			isbnIssn: d.isbnIssn,
+			verificacionLibro: d.verificacionLibro,
+			baseDatosRevista: d.baseDatosRevista,
+			verificacionReferencia: d.verificacionReferencia,
+			nivel: d.nivel,
+			clasificacion: d.clasificacion || '',
+		  };
+		}
+		return null;
+	  } catch (err: any) {
+		this.error = err?.message || 'Error al cargar la publicación';
+		return null;
 	  } finally {
 		this.isLoading = false;
 	  }

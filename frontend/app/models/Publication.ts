@@ -2,12 +2,12 @@ export interface Publication {
   id: string;
   anno: number;
   titulo: string;
-  revista_editorial: string;
-  tipo_publicacion: 'articulo' | 'libro' | 'libro_digital' | 'capitulo_libro' | 'texto_carrera' | 'material_docente' | 'patente';
-  isbn_issn: string;
-  verificacion_libro: string;
-  base_datos_revista: string;
-  verificacion_referencia: string;
+  revistaEditorial: string;
+  tipoPublicacion: 'articulo' | 'libro' | 'libro_digital' | 'capitulo_libro' | 'texto_carrera' | 'material_docente' | 'patente';
+  isbnIssn: string;
+  verificacionLibro: string;
+  baseDatosRevista: string;
+  verificacionReferencia: string;
   nivel: number;
   clasificacion: string;
 }
@@ -22,12 +22,12 @@ export const mockPublications: Publication[] = [
     id: "1",
     anno: 2023,
     titulo: "Avances en Inteligencia Artificial aplicada a la Educación",
-    revista_editorial: "Springer Nature",
-    tipo_publicacion: "libro",
-    isbn_issn: "978-3-030-12345-6",
-    verificacion_libro: "DOI:10.1007/12345",
-    base_datos_revista: "Scopus",
-    verificacion_referencia: "DOI:10.1007/12345",
+    revistaEditorial: "Springer Nature",
+    tipoPublicacion: "libro",
+    isbnIssn: "978-3-030-12345-6",
+    verificacionLibro: "DOI:10.1007/12345",
+    baseDatosRevista: "Scopus",
+    verificacionReferencia: "DOI:10.1007/12345",
     nivel: 1,
     clasificacion: ""
   },
@@ -35,12 +35,12 @@ export const mockPublications: Publication[] = [
     id: "2",
     anno: 2022,
     titulo: "Machine Learning para diagnóstico médico temprano",
-    revista_editorial: "IEEE",
-    tipo_publicacion: "articulo",
-    isbn_issn: "1234-5678",
-    verificacion_libro: "DOI:10.1109/TMI.2022.123456",
-    base_datos_revista: "Web of Science",
-    verificacion_referencia: "DOI:10.1109/TMI.2022.123456",
+    revistaEditorial: "IEEE",
+    tipoPublicacion: "articulo",
+    isbnIssn: "1234-5678",
+    verificacionLibro: "DOI:10.1109/TMI.2022.123456",
+    baseDatosRevista: "Web of Science",
+    verificacionReferencia: "DOI:10.1109/TMI.2022.123456",
     nivel: 2,
     clasificacion: ""
   },
@@ -48,12 +48,12 @@ export const mockPublications: Publication[] = [
     id: "3",
     anno: 2021,
     titulo: "Blockchain en sistemas de salud: una revisión sistemática",
-    revista_editorial: "Elsevier",
-    tipo_publicacion: "capitulo_libro",
-    isbn_issn: "978-1-4503-9999-1",
-    verificacion_libro: "ISBN:978-1-4503-9999-1",
-    base_datos_revista: "SciELO",
-    verificacion_referencia: "ISBN:978-1-4503-9999-1",
+    revistaEditorial: "Elsevier",
+    tipoPublicacion: "capitulo_libro",
+    isbnIssn: "978-1-4503-9999-1",
+    verificacionLibro: "ISBN:978-1-4503-9999-1",
+    baseDatosRevista: "SciELO",
+    verificacionReferencia: "ISBN:978-1-4503-9999-1",
     nivel: 3,
     clasificacion: ""
   },
@@ -61,12 +61,12 @@ export const mockPublications: Publication[] = [
     id: "4",
     anno: 2020,
     titulo: "Desarrollo de software ágil en entornos educativos",
-    revista_editorial: "ACM",
-    tipo_publicacion: "libro_digital",
-    isbn_issn: "978-1-4503-8888-8",
-    verificacion_libro: "DOI:10.1145/123456.789101",
-    base_datos_revista: "IEEE Xplore",
-    verificacion_referencia: "DOI:10.1145/123456.789101",
+    revistaEditorial: "ACM",
+    tipoPublicacion: "libro_digital",
+    isbnIssn: "978-1-4503-8888-8",
+    verificacionLibro: "DOI:10.1145/123456.789101",
+    baseDatosRevista: "IEEE Xplore",
+    verificacionReferencia: "DOI:10.1145/123456.789101",
     nivel: 1,
     clasificacion: ""
   }

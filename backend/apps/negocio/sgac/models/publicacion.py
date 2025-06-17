@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.db import models
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 class PublicacionClasificacion(models.Model):
@@ -40,12 +41,18 @@ class Publicacion(models.Model):
         choices=TIPO_CHOICES
     )
     isbn_issn = models.CharField(db_column="isbn_issn", max_length=500)
-    verificacion_libro = models.CharField(db_column="verificacion_libro")
+    verificacion_libro = models.CharField(db_column="verificacion_libro", max_length=500)
     base_datos_revista = models.CharField(
         db_column="base_datos_revista", max_length=500
     )
-    verificacion_referencia = models.CharField(db_column="verificacion_referencia")
-    nivel = models.IntegerField(db_column="nivel")
+    verificacion_referencia = models.CharField(db_column="verificacion_referencia", max_length=500)
+    nivel = models.IntegerField(
+        db_column="nivel",
+        validators=[
+            MinValueValidator(1, message='El nivel mínimo es 1'),
+            MaxValueValidator(4, message='El nivel máximo es 4')
+        ]
+    )
 
     def __str__(self):
         return self.titulo

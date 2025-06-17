@@ -24,38 +24,85 @@ onMounted( async () => {
 } )
 
 const columns : TableColumn<Publication>[] = [
-  { accessorKey : 'anno', header : 'Año' },
-  { accessorKey : 'titulo', header : 'Título' },
-  { accessorKey : 'revista_editorial', header : 'Revista/Editorial' },
-  { accessorKey : 'tipo_publicacion', header : 'Tipo de Publicación' },
-  { accessorKey : 'isbn_issn', header : 'ISBN/ISSN' },
-  { accessorKey : 'base_datos_revista', header : 'Base de Datos' },
-  { accessorKey : 'nivel', header : 'Nivel' },
-  { accessorKey : 'clasificacion', header : 'Clasificación', cell: ({ row }) => h('span', publicationStore.getClassificationNameById(row.original.clasificacion)) },
+  { 
+    accessorKey: 'anno', 
+    header: 'Año',
+    cell: ({ row }) => row.original.anno || 'N/A'
+  },
+  { 
+    accessorKey: 'titulo', 
+    header: 'Título',
+    cell: ({ row }) => row.original.titulo || 'N/A'
+  },
+  { 
+    accessorKey: 'revistaEditorial', 
+    header: 'Revista/Editorial',
+    cell: ({ row }) => row.original.revistaEditorial || 'N/A'
+  },
+  { 
+    accessorKey: 'tipoPublicacion', 
+    header: 'Tipo de Publicación',
+    cell: ({ row }) => {
+      const tipos: Record<string, string> = {
+        'articulo': 'Artículo',
+        'libro': 'Libro',
+        'libro_digital': 'Libro Digital',
+        'capitulo_libro': 'Capítulo de Libro',
+        'texto_carrera': 'Texto de la Carrera',
+        'material_docente': 'Material Docente Interno',
+        'patente': 'Patente'
+      };
+      return row.original.tipoPublicacion ? tipos[row.original.tipoPublicacion] || row.original.tipoPublicacion : 'N/A';
+    }
+  },
+  { 
+    accessorKey: 'isbnIssn', 
+    header: 'ISBN/ISSN',
+    cell: ({ row }) => row.original.isbnIssn || 'N/A'
+  },
+  { 
+    accessorKey: 'verificacionLibro', 
+    header: 'Verificación Libro',
+    cell: ({ row }) => row.original.verificacionLibro || 'N/A'
+  },
+  { 
+    accessorKey: 'baseDatosRevista', 
+    header: 'Base de Datos',
+    cell: ({ row }) => row.original.baseDatosRevista || 'N/A'
+  },
+  { 
+    accessorKey: 'verificacionReferencia', 
+    header: 'Verificación Referencia',
+    cell: ({ row }) => row.original.verificacionReferencia || 'N/A'
+  },
+  { 
+    accessorKey: 'nivel', 
+    header: 'Nivel',
+    cell: ({ row }) => row.original.nivel ? `Nivel ${row.original.nivel}` : 'N/A'
+  },
   {
-    id : 'action',
-    header : () => h( 'div', { class : 'flex justify-end flex-row pr-8' }, 'Acciones' ),
-    cell : ( { row } ) =>
-        h( 'div', { class : 'flex gap-2 justify-end flex-row' }, [
-          h( UButton, {
-            color : 'neutral',
-            size : 'xs',
-            onClick : () => {
-              publicationStore.currentPublication = row.original
-              router.push( '/publicaciones/actualizar-publicacion' )
-            }
-          }, { default : () => 'Editar' } ),
+    id: 'action',
+    header: () => h('div', { class: 'flex justify-end flex-row pr-8' }, 'Acciones'),
+    cell: ({ row }) =>
+      h('div', { class: 'flex gap-2 justify-end flex-row' }, [
+        h(UButton, {
+          color: 'neutral',
+          size: 'xs',
+          onClick: () => {
+            publicationStore.currentPublication = row.original
+            router.push('/publicaciones/actualizar-publicacion')
+          }
+        }, { default: () => 'Editar' }),
 
-          h( UButton, {
-            color : 'error',
-            size : 'xs',
-            onClick : () => {
-              publicationStore.currentPublication = row.original
-              showConfirmModal.value = true
-            }
-          }, { default : () => 'Eliminar' } )
-
-        ] )
+        h(UButton, {
+          color: 'error',
+          size: 'xs',
+          onClick: () => {
+            publicationStore.currentPublication = row.original
+            showConfirmModal.value = true
+          }
+        }, { default: () => 'Eliminar' })
+      ])
   }
 ]
 

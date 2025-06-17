@@ -2,37 +2,62 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from "#ui/types";
 import { usePublicationStore } from "~/pages/publicaciones/store";
+import { onMounted, reactive } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 
 definePageMeta( { layout : 'dashboard' } )
 
 const toast = useToast()
 const router = useRouter()
+const route = useRoute()
 const publicationStore = usePublicationStore()
 
 const schema = z.object({
   id: z.string().optional(),
-  anno: z.string().min(4, 'Debe ser un año válido').max(4),
+  anno: z.number().min(1900, 'Debe ser un año válido').max(new Date().getFullYear(), 'El año no puede ser en el futuro'),
   titulo: z.string().min(5, 'Título demasiado corto'),
-  revista_editorial: z.string().min(2, 'Editorial requerida'),
-  tipo_publicacion: z.string().min(1, 'Tipo requerido'),
-  isbn_issn: z.string().min(5, 'ISBN/ISSN requerido'),
-  base_datos_revista: z.string().min(1, 'Base de datos requerida'),
-  verificacion_referencia: z.string().min(5, 'Referencia requerida'),
-  nivel: z.string().min(1, 'Nivel requerido'),
+  revistaEditorial: z.string().min(2, 'Editorial requerida'),
+  tipoPublicacion: z.string().min(1, 'Tipo requerido'),
+  isbnIssn: z.string().min(5, 'ISBN/ISSN requerido'),
+  verificacionLibro: z.string().min(1, 'Verificación de libro requerida'),
+  baseDatosRevista: z.string().min(1, 'Base de datos requerida'),
+  verificacionReferencia: z.string().min(1, 'Referencia requerida'),
+  nivel: z.number().min(1, 'Nivel mínimo es 1').max(4, 'Nivel máximo es 4'),
 })
 
 type SchemaType = z.infer<typeof schema>;
 
 const state = reactive<SchemaType>({
-  anno: publicationStore.currentPublication?.anno?.toString() || '',
-  titulo: publicationStore.currentPublication?.titulo || '',
-  revista_editorial: publicationStore.currentPublication?.revista_editorial || '',
-  tipo_publicacion: publicationStore.currentPublication?.tipo_publicacion || '',
-  isbn_issn: publicationStore.currentPublication?.isbn_issn || '',
-  base_datos_revista: publicationStore.currentPublication?.base_datos_revista || '',
-  verificacion_referencia: publicationStore.currentPublication?.verificacion_referencia || '',
-  nivel: publicationStore.currentPublication?.nivel?.toString() || '',
+  id: '',
+  anno: new Date().getFullYear(),
+  titulo: '',
+  revistaEditorial: '',
+  tipoPublicacion: '',
+  isbnIssn: '',
+  verificacionLibro: '',
+  baseDatosRevista: '',
+  verificacionReferencia: '',
+  nivel: 1,
 })
+
+onMounted(async () => {
+  const publicationId = route.params.id as string;
+  if (publicationId) {
+    const pub = await publicationStore.fetchPublicationById(publicationId);
+    if (pub) {
+      state.id = pub.id;
+      state.anno = pub.anno;
+      state.titulo = pub.titulo;
+      state.revistaEditorial = pub.revistaEditorial;
+      state.tipoPublicacion = pub.tipoPublicacion;
+      state.isbnIssn = pub.isbnIssn;
+      state.verificacionLibro = pub.verificacionLibro;
+      state.baseDatosRevista = pub.baseDatosRevista;
+      state.verificacionReferencia = pub.verificacionReferencia;
+      state.nivel = pub.nivel;
+    }
+  }
+});
 
 // Opciones para los selects
 const publicationTypes = [
@@ -45,28 +70,21 @@ const publicationTypes = [
   { label: 'Patente', value: 'patente' }
 ]
 
-const databaseOptions = [
-  'Scopus',
-  'Web of Science',
-  'IEEE Xplore',
-  'Springer Link',
-  'ScienceDirect',
-  'SciELO',
-  'Google Scholar',
-  'Otro'
-]
-
 const levelOptions = [
-  'Q1',
-  'Q2',
-  'Q3',
-  'Q4',
-  'No indexado'
+  { label: 'Nivel 1', value: 1 },
+  { label: 'Nivel 2', value: 2 },
+  { label: 'Nivel 3', value: 3 },
+  { label: 'Nivel 4', value: 4 }
 ]
 
 // Enviar datos
 async function onSubmit(event: FormSubmitEvent<SchemaType>) {
-  const result = await publicationStore.updatePublication(event.data)
+  const payload = {
+    ...event.data,
+    anno: Number(event.data.anno),
+    nivel: Number(event.data.nivel),
+  }
+  const result = await publicationStore.updatePublication(payload)
 
   if (result) {
     toast.add({
@@ -102,10 +120,8 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
       </template>
 
       <div class="flex flex-col space-y-2 w-full">
-
         <!-- Título y Año -->
         <div class="grid grid-cols-3 w-full gap-4">
-
           <UFormField class="w-full col-span-2" label="Título" name="titulo" required>
             <UInput class="w-full" v-model="state.titulo" placeholder="Título completo de la publicación"/>
           </UFormField>
@@ -113,7 +129,7 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
           <UFormField class="w-full col-span-1" label="Año" name="anno" required>
             <UInput
                 class="w-full"
-                v-model="state.anno"
+                v-model.number="state.anno"
                 type="number"
                 min="1900"
                 :max="new Date().getFullYear()"
@@ -123,44 +139,45 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
         </div>
 
         <div class="grid grid-cols-2 w-full gap-4">
-
           <!-- Editorial y Tipo -->
-          <UFormField label="Editorial" name="revista_editorial" required>
-            <UInput class="w-full" v-model="state.revista_editorial" placeholder="Nombre de la editorial"/>
+          <UFormField label="Editorial" name="revistaEditorial" required>
+            <UInput class="w-full" v-model="state.revistaEditorial" placeholder="Nombre de la editorial"/>
           </UFormField>
 
-          <UFormField label="Tipo de publicación" name="tipo_publicacion" required>
+          <UFormField label="Tipo de publicación" name="tipoPublicacion" required>
             <USelect class="w-full"
-                     v-model="state.tipo_publicacion"
+                     v-model="state.tipoPublicacion"
                      :items="publicationTypes"
                      placeholder="Seleccione el tipo"
+                     icon="i-heroicons-chevron-down-20-solid"
             />
           </UFormField>
-
         </div>
-        <!-- ISBN/ISSN y Base de datos -->
-        <UFormField label="ISBN/ISSN" name="isbn_issn" required>
-          <UInput class="w-full" v-model="state.isbn_issn" placeholder="Identificador único"/>
+
+        <!-- ISBN/ISSN y Verificación de libro -->
+        <UFormField label="ISBN/ISSN" name="isbnIssn" required>
+          <UInput class="w-full" v-model="state.isbnIssn" placeholder="Identificador único"/>
         </UFormField>
 
-        <UFormField label="Base de datos" name="base_datos_revista" required>
-          <USelect class="w-full"
-                   v-model="state.base_datos_revista"
-                   :items="databaseOptions"
-                   placeholder="Seleccione la base"
-          />
+        <UFormField label="Verificación de libro" name="verificacionLibro" required>
+          <UInput class="w-full" v-model="state.verificacionLibro" placeholder="Verificación del libro"/>
+        </UFormField>
+
+        <UFormField label="Base de datos" name="baseDatosRevista" required>
+          <UInput class="w-full" v-model="state.baseDatosRevista" placeholder="Nombre de la base de datos"/>
         </UFormField>
 
         <!-- Referencia y Nivel -->
-        <UFormField label="Referencia de verificación" name="verificacion_referencia" required>
-          <UInput class="w-full" v-model="state.verificacion_referencia" placeholder="DOI, URL o referencia"/>
+        <UFormField label="Referencia de verificación" name="verificacionReferencia" required>
+          <UInput class="w-full" v-model="state.verificacionReferencia" placeholder="DOI, URL o referencia"/>
         </UFormField>
 
-        <UFormField label="Nivel de indexación" name="nivel" required>
+        <UFormField label="Nivel" name="nivel" required>
           <USelect class="w-full"
-                   v-model="state.nivel"
+                   v-model.number="state.nivel"
                    :items="levelOptions"
                    placeholder="Seleccione el nivel"
+                   icon="i-heroicons-chevron-down-20-solid"
           />
         </UFormField>
       </div>
