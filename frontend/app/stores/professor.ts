@@ -86,6 +86,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 				gradoCientifico: p.gradoCientifico,
 				correos: p.correos || [],
 				telefonos: p.telefonos || [],
+				drEspecialidadAfin: p.drEspecialidadAfin ?? null,
 			  };
 			});
 			console.log('Final professors array:', this.professors);
@@ -125,6 +126,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
               gradoCientifico: p.gradoCientifico,
               correos: p.correos || [],
               telefonos: p.telefonos || [],
+              drEspecialidadAfin: p.drEspecialidadAfin ?? null,
             };
             this.currentProfessor = fetchedProfessor;
             return fetchedProfessor;
@@ -166,6 +168,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 			  gradoCientifico: response.gradoCientifico,
 			  correos: response.correos || [],
 			  telefonos: response.telefonos || [],
+			  drEspecialidadAfin: response.drEspecialidadAfin ?? null,
 			};
 			this.professors.push(newProfessor);
 			return newProfessor; 
@@ -207,6 +210,7 @@ export const useProfessorStore = defineStore( 'professorStore', {
 			  gradoCientifico: response.gradoCientifico,
 			  correos: response.correos || [],
 			  telefonos: response.telefonos || [],
+			  drEspecialidadAfin: response.drEspecialidadAfin ?? null,
 			};
 			const index = this.professors.findIndex(p => p.id === updated.id);
 			if (index !== -1) {

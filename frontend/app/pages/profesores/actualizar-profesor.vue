@@ -32,7 +32,8 @@ const schema = z.object({
   telefonos: z.array(z.object({
     etiqueta: z.string(),
     numero: z.string().min(1, 'Teléfono inválido')
-  })).min(1, 'Al menos un teléfono es requerido')
+  })).min(1, 'Al menos un teléfono es requerido'),
+  drEspecialidadAfin: z.enum(['SI', 'NO']).nullable(),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -47,7 +48,8 @@ const state = reactive<SchemaType>({
   categoriaDocente: 'INSTRUCTOR',
   gradoCientifico: 'DOCTOR',
   correos: [{ etiqueta: 'personal', correo: '' }],
-  telefonos: [{ etiqueta: 'personal', numero: '' }]
+  telefonos: [{ etiqueta: 'personal', numero: '' }],
+  drEspecialidadAfin: null,
 });
 
 const categoriasDocente = [
@@ -63,6 +65,12 @@ const gradosCientificos = [
   { value: 'DOCTOR', label: 'Doctor' },
   { value: 'MASTER', label: 'Máster' },
   { value: 'NINGUNO', label: 'Ninguno' }
+];
+
+const drEspecialidadAfinOptions = [
+  { value: null, label: 'Sin especificar' },
+  { value: 'SI', label: 'Sí' },
+  { value: 'NO', label: 'No' }
 ];
 
 onMounted(async () => {
@@ -84,6 +92,7 @@ watchEffect(() => {
     state.gradoCientifico = professorsStore.currentProfessor.gradoCientifico
     state.correos = professorsStore.currentProfessor.correos
     state.telefonos = professorsStore.currentProfessor.telefonos
+    state.drEspecialidadAfin = professorsStore.currentProfessor.drEspecialidadAfin ?? null;
   }
 })
 
@@ -124,6 +133,7 @@ async function handleSubmit() {
       gradoCientifico: state.gradoCientifico,
       correos: state.correos,
       telefonos: state.telefonos,
+      drEspecialidadAfin: state.drEspecialidadAfin,
     };
 
     console.log('Submitting professor data:', updatedProfessorData);
@@ -218,6 +228,15 @@ function removePhone(index: number) {
             v-model="state.gradoCientifico"
             :items="gradosCientificos"
             placeholder="Seleccione grado científico"
+            class="w-full"
+          />
+        </UFormField>
+
+        <UFormField label="Dr. Especialidad Afín" name="drEspecialidadAfin">
+          <USelect
+            v-model="state.drEspecialidadAfin"
+            :items="drEspecialidadAfinOptions"
+            placeholder="Seleccione una opción"
             class="w-full"
           />
         </UFormField>

@@ -9,6 +9,7 @@ export interface Professors {
   gradoCientifico?: string;
   correos: { etiqueta: string; correo: string }[];
   telefonos: { etiqueta: string; numero: string }[];
+  drEspecialidadAfin?: 'SI' | 'NO' | null;
 }
 
 export const mockProfessors: Professors[] = [
@@ -29,6 +30,7 @@ export const mockProfessors: Professors[] = [
       { etiqueta: "Móvil", numero: "555-1234" },
       { etiqueta: "Trabajo", numero: "555-5678" },
     ],
+    drEspecialidadAfin: 'SI',
   },
   {
     id: "prof-002",
@@ -40,7 +42,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "ASISTENTE",
     gradoCientifico: "DOCTOR_EN_CIENCIAS",
     correos: [{ etiqueta: "personal", correo: "m.rodriguez@universidad.edu" }],
-    telefonos: [{ etiqueta: "personal", numero: "5357654321" }]
+    telefonos: [{ etiqueta: "personal", numero: "5357654321" }],
+    drEspecialidadAfin: 'NO',
   },
   {
     id: "prof-003",
@@ -52,7 +55,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "TITULAR",
     gradoCientifico: "DOCTOR_EN_CIENCIA",
     correos: [{ etiqueta: "personal", correo: "l.perez@universidad.edu" }, { etiqueta: "secundario", correo: "luis.pg@outlook.com" }],
-    telefonos: [{ etiqueta: "personal", numero: "5359876543" }, { etiqueta: "trabajo", numero: "786543219" }]
+    telefonos: [{ etiqueta: "personal", numero: "5359876543" }, { etiqueta: "trabajo", numero: "786543219" }],
+    drEspecialidadAfin: null,
   },
   {
     id: "prof-004",
@@ -64,7 +68,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "INSTRUCTOR",
     gradoCientifico: "DOCTOR_EN_CIENCIA",
     correos: [{ etiqueta: "personal", correo: "a.lopez@universidad.edu" }],
-    telefonos: [{ etiqueta: "personal", numero: "5354567890" }]
+    telefonos: [{ etiqueta: "personal", numero: "5354567890" }],
+    drEspecialidadAfin: 'SI',
   },
   {
     id: "prof-005",
@@ -76,7 +81,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "TITULAR",
     gradoCientifico: "DOCTOR_EN_CIENCIAS",
     correos: [{ etiqueta: "personal", correo: "j.martin@universidad.edu" }, { etiqueta: "secundario", correo: "jorgems@yahoo.com" }],
-    telefonos: [{ etiqueta: "personal", numero: "5351112233" }, { etiqueta: "trabajo", numero: "785556667" }]
+    telefonos: [{ etiqueta: "personal", numero: "5351112233" }, { etiqueta: "trabajo", numero: "785556667" }],
+    drEspecialidadAfin: 'NO',
   },
   {
     id: "prof-006",
@@ -88,7 +94,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "AUXILIAR",
     gradoCientifico: "DOCTOR_EN_CIENCIA",
     correos: [{ etiqueta: "personal", correo: "l.garcia@universidad.edu" }],
-    telefonos: [{ etiqueta: "personal", numero: "5359988776" }]
+    telefonos: [{ etiqueta: "personal", numero: "5359988776" }],
+    drEspecialidadAfin: null,
   },
   {
     id: "prof-007",
@@ -100,7 +107,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "TITULAR",
     gradoCientifico: "DOCTOR_EN_CIENCIAS",
     correos: [{ etiqueta: "personal", correo: "p.jimenez@universidad.edu" }, { etiqueta: "secundario", correo: "pedro.jrz@hotmail.com" }],
-    telefonos: [{ etiqueta: "personal", numero: "5353344556" }, { etiqueta: "trabajo", numero: "787778889" }]
+    telefonos: [{ etiqueta: "personal", numero: "5353344556" }, { etiqueta: "trabajo", numero: "787778889" }],
+    drEspecialidadAfin: 'SI',
   },
   {
     id: "prof-008",
@@ -112,7 +120,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "INSTRUCTOR",
     gradoCientifico: "DOCTOR_EN_CIENCIA",
     correos: [{ etiqueta: "personal", correo: "s.torres@universidad.edu" }],
-    telefonos: [{ etiqueta: "personal", numero: "5356677889" }]
+    telefonos: [{ etiqueta: "personal", numero: "5356677889" }],
+    drEspecialidadAfin: 'NO',
   },
   {
     id: "prof-009",
@@ -124,7 +133,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "TITULAR",
     gradoCientifico: "DOCTOR_EN_CIENCIAS",
     correos: [{ etiqueta: "personal", correo: "r.moreno@universidad.edu" }, { etiqueta: "secundario", correo: "ricardo.mv@protonmail.com" }],
-    telefonos: [{ etiqueta: "personal", numero: "5351237890" }, { etiqueta: "trabajo", numero: "786543210" }]
+    telefonos: [{ etiqueta: "personal", numero: "5351237890" }, { etiqueta: "trabajo", numero: "786543210" }],
+    drEspecialidadAfin: null,
   },
   {
     id: "prof-010",
@@ -136,7 +146,8 @@ export const mockProfessors: Professors[] = [
     categoriaDocente: "ASISTENTE",
     gradoCientifico: "DOCTOR_EN_CIENCIA",
     correos: [{ etiqueta: "personal", correo: "e.dominguez@universidad.edu" }],
-    telefonos: [{ etiqueta: "personal", numero: "5354561237" }]
+    telefonos: [{ etiqueta: "personal", numero: "5354561237" }],
+    drEspecialidadAfin: 'SI',
   }
 ];
 

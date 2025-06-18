@@ -134,6 +134,18 @@ const columns : TableColumn<Professors>[] = [
     }
   },
   {
+    id: 'drEspecialidadAfin',
+    key: 'drEspecialidadAfin',
+    header: 'Dr. Especialidad Afín',
+    accessorKey: 'drEspecialidadAfin',
+    cell: ({ row }) => {
+      const value = row.original?.drEspecialidadAfin;
+      if (value === 'SI') return 'Sí';
+      if (value === 'NO') return 'No';
+      return '';
+    }
+  },
+  {
     id: 'actions',
     key: 'actions',
     header: 'Acciones',

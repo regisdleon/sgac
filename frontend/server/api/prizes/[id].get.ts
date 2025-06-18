@@ -1,7 +1,7 @@
 // server/api/disciplines/[id].get.ts
 export default defineEventHandler( async ( event ) => {
   const id = getRouterParam( event, 'id' );
-  const { data, error } = await useBackendFetch( `/prizes/${ id }` );
+  const { data, error } = await useBackendFetch( `/premios/${ id }` );
   
   if ( error ) {
 	throw createError( {

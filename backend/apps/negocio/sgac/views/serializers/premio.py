@@ -9,5 +9,8 @@ class PremioSerializer(serializers.ModelSerializer):
         model = Premio
         fields = [
             "id",
-            "nombre",
+            "profesor",
+            "anno",
+            "descripcion",
+            "clasificacion",
         ]

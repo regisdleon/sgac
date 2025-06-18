@@ -22,23 +22,33 @@ export interface Professor {
 }
 
 export interface Prize {
-  _id: string;
-  nombre: string;
-  createdAt: string;
-  updatedAt: string;
+  id: string;
+  profesor: string;
+  anno: string;
+  descripcion: string;
+  clasificacion: string;
 }
 
 export const mockPrizes: Prize[] = [
   {
     id: "1",
-    nombre: "Premio Nacional de Investigación Científica",
+    profesor: "1",
+    anno: "2023",
+    descripcion: "Premio Nacional de Investigación Científica",
+    clasificacion: "Científico"
   },
   {
     id: "2",
-    nombre: "Galardón Internacional a la Innovación Tecnológica",
+    profesor: "2",
+    anno: "2022",
+    descripcion: "Galardón Internacional a la Innovación Tecnológica",
+    clasificacion: "Tecnológico"
   },
   {
     id: "3",
-    nombre: "Distinción Académica a la Excelencia Docente",
+    profesor: "3",
+    anno: "2023",
+    descripcion: "Distinción Académica a la Excelencia Docente",
+    clasificacion: "Académico"
   }
 ];

@@ -2,93 +2,181 @@
 import { defineStore } from 'pinia';
 import type { Prize } from '~/models/Prize';
 
-export const usePrizeStore = defineStore('prize', {
+export const usePrizeStore = defineStore('prizeStore', {
   state: () => ({
     prizes: [] as Prize[],
-    loading: false,
+    currentPrize: null as Prize | null,
+    isLoading: false,
     error: null as string | null
   }),
 
   getters: {
-    getPrizes: (state) => state.prizes
+    getPrizeById: (state) => (id: string) => {
+      return state.prizes.find((p: Prize) => p.id === id);
+    }
   },
 
   actions: {
     async fetchPrizes() {
-      this.loading = true;
+      this.isLoading = true;
+      this.error = null;
+      
       try {
-        const response = await fetch('/api/prizes');
-        if (!response.ok) throw new Error('Error al cargar los premios');
-        this.prizes = await response.json();
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Error desconocido';
-        throw error;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async createPrize(prize: Omit<Prize, '_id' | 'createdAt' | 'updatedAt'>) {
-      this.loading = true;
-      try {
-        const response = await fetch('/api/prizes', {
-          method: 'POST',
+        const response = await $fetch<Prize[]>('/api/premios', {
           headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(prize)
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          }
         });
-        if (!response.ok) throw new Error('Error al crear el premio');
-        const newPrize = await response.json();
-        this.prizes.push(newPrize);
-        return newPrize;
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Error desconocido';
-        throw error;
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async updatePrize(id: string, prize: Partial<Prize>) {
-      this.loading = true;
-      try {
-        const response = await fetch(`/api/prizes/${id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(prize)
-        });
-        if (!response.ok) throw new Error('Error al actualizar el premio');
-        const updatedPrize = await response.json();
-        const index = this.prizes.findIndex(p => p._id === id);
-        if (index !== -1) {
-          this.prizes[index] = updatedPrize;
+        
+        if (Array.isArray(response)) {
+          this.prizes = response.map((p: any) => ({
+            id: p.id,
+            profesor: p.profesor,
+            anno: p.anno,
+            descripcion: p.descripcion,
+            clasificacion: p.clasificacion,
+          }));
+        } else {
+          this.error = 'Formato de respuesta inválido';
         }
-        return updatedPrize;
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Error desconocido';
-        throw error;
+      } catch (err) {
+        console.error('Error fetching prizes:', err);
+        this.error = err instanceof Error ? err.message : 'Error al cargar premios';
       } finally {
-        this.loading = false;
+        this.isLoading = false;
+      }
+    },
+
+    async fetchPrizeById(id: string) {
+      this.isLoading = true;
+      this.error = null;
+      
+      try {
+        const response = await $fetch<Prize>(`/api/premios/${id}`);
+        
+        if (response) {
+          const fetchedPrize: Prize = {
+            id: response.id,
+            profesor: response.profesor,
+            anno: response.anno,
+            descripcion: response.descripcion,
+            clasificacion: response.clasificacion,
+          };
+          this.currentPrize = fetchedPrize;
+          return fetchedPrize;
+        }
+        return null;
+      } catch (err) {
+        console.error(`Error fetching prize ${id}:`, err);
+        this.error = err instanceof Error ? err.message : 'Error al obtener el premio';
+        return null;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async createPrize(prizeData: Omit<Prize, 'id'>) {
+      this.isLoading = true;
+      this.error = null;
+      
+      try {
+        const response = await $fetch<Prize>('/api/premios', {
+          method: 'POST',
+          body: prizeData,
+        });
+        
+        if (response) {
+          const newPrize: Prize = {
+            id: response.id,
+            profesor: response.profesor,
+            anno: response.anno,
+            descripcion: response.descripcion,
+            clasificacion: response.clasificacion,
+          };
+          this.prizes.push(newPrize);
+          return newPrize;
+        }
+        return null;
+      } catch (err) {
+        console.error('Error creating prize:', err);
+        this.error = err instanceof Error ? err.message : 'Error al crear premio';
+        return null;
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    async updatePrize(updatedPrize: Prize) {
+      this.isLoading = true;
+      this.error = null;
+      
+      try {
+        const response = await $fetch<Prize>(`/api/premios/${updatedPrize.id}`, {
+          method: 'PATCH',
+          body: updatedPrize,
+        });
+        
+        if (response) {
+          const updated: Prize = {
+            id: response.id,
+            profesor: response.profesor,
+            anno: response.anno,
+            descripcion: response.descripcion,
+            clasificacion: response.clasificacion,
+          };
+          
+          const index = this.prizes.findIndex(p => p.id === updated.id);
+          if (index !== -1) {
+            this.prizes[index] = updated;
+          }
+          
+          this.currentPrize = updated;
+          return updated;
+        }
+        return null;
+      } catch (err) {
+        console.error('Error updating prize:', err);
+        this.error = err instanceof Error ? err.message : 'Error al actualizar premio';
+        return null;
+      } finally {
+        this.isLoading = false;
       }
     },
 
     async deletePrize(id: string) {
-      this.loading = true;
+      this.isLoading = true;
+      this.error = null;
+      
       try {
-        const response = await fetch(`/api/prizes/${id}`, {
+        await $fetch(`/api/premios/${id}`, {
           method: 'DELETE'
         });
-        if (!response.ok) throw new Error('Error al eliminar el premio');
-        this.prizes = this.prizes.filter(p => p._id !== id);
-      } catch (error) {
-        this.error = error instanceof Error ? error.message : 'Error desconocido';
-        throw error;
+        
+        this.prizes = this.prizes.filter(p => p.id !== id);
+        if (this.currentPrize?.id === id) {
+          this.currentPrize = null;
+        }
+        return true;
+      } catch (err) {
+        console.error('Error deleting prize:', err);
+        this.error = err instanceof Error ? err.message : 'Error al eliminar premio';
+        return false;
       } finally {
-        this.loading = false;
+        this.isLoading = false;
       }
+    },
+
+    setCurrentPrize(prize: Prize | null) {
+      this.currentPrize = prize;
+    },
+
+    clearCurrentPrize() {
+      this.currentPrize = null;
+    },
+
+    clearError() {
+      this.error = null;
     }
   }
 });

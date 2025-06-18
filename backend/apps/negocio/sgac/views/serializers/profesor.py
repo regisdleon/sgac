@@ -26,6 +26,7 @@ class ProfesorSerializer(serializers.ModelSerializer):
             "annos_experiencia_mes",
             "categoria_docente",
             "grado_cientifico",
+            "dr_especialidad_afin",
             "correos",
             "telefonos",
         ]

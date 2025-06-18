@@ -3,7 +3,7 @@ export default defineEventHandler( async ( event ) => {
   const id = getRouterParam( event, 'id' );
   const body = await readBody( event );
   
-  const { data, error } = await useBackendFetch( `/prizes/${ id }`, {
+  const { data, error } = await useBackendFetch( `/premios/${ id }`, {
 	method : 'PATCH',
 	body
   } );

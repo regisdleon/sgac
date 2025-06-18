@@ -36,6 +36,17 @@ class Profesor(models.Model):
     telefonos = models.JSONField(default=dict, db_column="telefonos")
     asignaturas = models.ManyToManyField("Asignatura", through="ProfesorAsignatura")
     eventos = models.ManyToManyField("Evento", through="ProfesorEvento")
+    DR_ESPECIALIDAD_AFIN_CHOICES = [
+        ("SI", "Sí"),
+        ("NO", "No"),
+    ]
+    dr_especialidad_afin = models.CharField(
+        max_length=2,
+        choices=DR_ESPECIALIDAD_AFIN_CHOICES,
+        null=True,
+        blank=True,
+        db_column="dr_especialidad_afin"
+    )
 
     def __str__(self):
         return self.nombre + " " + self.primer_apellido + " " + self.segundo_apellido

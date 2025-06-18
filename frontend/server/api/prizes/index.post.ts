@@ -2,7 +2,7 @@
 export default defineEventHandler( async ( event ) => {
   const body = await readBody( event );
   
-  const { data, error } = await useBackendFetch( '/prizes', {
+  const { data, error } = await useBackendFetch( '/premios', {
 	method : 'POST',
 	body
   } );

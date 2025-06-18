@@ -2,7 +2,7 @@
 export default defineEventHandler( async ( event ) => {
   const id = getRouterParam( event, 'id' );
   
-  const { error } = await useBackendFetch( `/prizes/${ id }`, {
+  const { error } = await useBackendFetch( `/premios/${ id }/`, {
 	method : 'DELETE'
   } );
   

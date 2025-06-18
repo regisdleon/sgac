@@ -1,17 +1,12 @@
-import { mockPrizes } from "~/models/Prize";
-
-export default defineEventHandler( async ( event ) => {
-  const { data, error } = await useBackendFetch( '/prizes' );
+export default defineEventHandler(async (event) => {
+  const { data, error } = await useBackendFetch('/premios');
   
-  return { prizes : mockPrizes };
-  
-  
-  if ( error ) {
-	throw createError( {
-	  statusCode : 500,
-	  statusMessage : 'Failed to fetch prizes from backend',
-	} );
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Failed to fetch prizes from backend',
+    });
   }
   
-  return { prizes : data };
-} );
+  return data;
+});
