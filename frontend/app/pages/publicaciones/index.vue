@@ -146,7 +146,7 @@ const deletePublication = async () => {
       <UButton @click="router.push('/publicaciones/registrar-publicacion/')" icon="i-heroicons-plus-20-solid">Registrar publicación</UButton>
     </template>
   </CustomTable>
-  <ConfirmDeleteModal :open="showConfirmModal" :item="publicationStore.currentPublication?.title || ''"
+  <ConfirmDeleteModal :open="showConfirmModal" :item="publicationStore.currentPublication?.titulo || ''"
                       @update:open="onShowConfirmModalUpdate" @deleted="deletePublication"/>
 
 </template>

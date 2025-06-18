@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from "#ui/types";
 import { usePublicationStore } from "~/pages/publicaciones/store";
-import { onMounted, reactive } from 'vue';
+import { onMounted, reactive, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 definePageMeta( { layout : 'dashboard' } )
@@ -43,19 +43,22 @@ const state = reactive<SchemaType>({
 onMounted(async () => {
   const publicationId = route.params.id as string;
   if (publicationId) {
-    const pub = await publicationStore.fetchPublicationById(publicationId);
-    if (pub) {
-      state.id = pub.id;
-      state.anno = pub.anno;
-      state.titulo = pub.titulo;
-      state.revistaEditorial = pub.revistaEditorial;
-      state.tipoPublicacion = pub.tipoPublicacion;
-      state.isbnIssn = pub.isbnIssn;
-      state.verificacionLibro = pub.verificacionLibro;
-      state.baseDatosRevista = pub.baseDatosRevista;
-      state.verificacionReferencia = pub.verificacionReferencia;
-      state.nivel = pub.nivel;
-    }
+    await publicationStore.fetchPublicationById(publicationId);
+  }
+});
+
+watchEffect(() => {
+  if (publicationStore.currentPublication) {
+    state.id = publicationStore.currentPublication.id;
+    state.anno = publicationStore.currentPublication.anno;
+    state.titulo = publicationStore.currentPublication.titulo;
+    state.revistaEditorial = publicationStore.currentPublication.revistaEditorial;
+    state.tipoPublicacion = publicationStore.currentPublication.tipoPublicacion;
+    state.isbnIssn = publicationStore.currentPublication.isbnIssn;
+    state.verificacionLibro = publicationStore.currentPublication.verificacionLibro;
+    state.baseDatosRevista = publicationStore.currentPublication.baseDatosRevista;
+    state.verificacionReferencia = publicationStore.currentPublication.verificacionReferencia;
+    state.nivel = publicationStore.currentPublication.nivel;
   }
 });
 
@@ -78,11 +81,12 @@ const levelOptions = [
 ]
 
 // Enviar datos
-async function onSubmit(event: FormSubmitEvent<SchemaType>) {
+async function onSubmit(e?: Event) {
+  // Usar directamente el state
   const payload = {
-    ...event.data,
-    anno: Number(event.data.anno),
-    nivel: Number(event.data.nivel),
+    ...state,
+    anno: Number(state.anno),
+    nivel: Number(state.nivel),
   }
   const result = await publicationStore.updatePublication(payload)
 
@@ -104,10 +108,8 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
 </script>
 
 <template>
-  <UForm
-      :schema="schema"
-      :state="state"
-      @submit="onSubmit"
+  <form
+      @submit.prevent="onSubmit"
       class="flex justify-center w-full"
   >
     <UCard
@@ -199,5 +201,5 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
         </div>
       </template>
     </UCard>
-  </UForm>
+  </form>
 </template>
