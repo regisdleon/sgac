@@ -228,21 +228,14 @@ export const useEventStore = defineStore('eventStore', {
 	  try {
 		const config = useRuntimeConfig();
 		const url = `${config.public.backendBaseUrl}/api/eventos/${id}`;
-		const data = await $fetch(url, {
+		await $fetch(url, {
 		  method: 'DELETE'
 		})
-		
-		if (!data) {
-		  this.error = 'Error al eliminar el evento: No se recibieron datos'
-		  return false
-		}
-		
+		// Si no hay excepción, consideramos éxito
 		this.events = this.events.filter(e => e.id !== id)
-		
 		if (this.currentEvent?.id === id) {
 		  this.currentEvent = null
 		}
-		
 		return true
 	  } catch (err) {
 		this.error = err instanceof Error ? err.message : 'Error al eliminar el evento'

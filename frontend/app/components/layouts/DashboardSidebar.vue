@@ -17,11 +17,13 @@ const sidebarItems: any[] = [
   { label: 'Dashboard', to: '/inicio', icon: Home },
   { label: 'Carreras', to: '/carreras', icon: ComponentIcon },
   { label: 'Profesores', to: '/profesores', icon: LucidePenOff },
+  { label: 'Evaluación', to: '/evaluacion-profesor', icon: Users },
   { label: 'Asignaturas', to: '/asignaturas', icon: Book },
   { label: 'Disciplinas', to: '/disciplinas', icon: Component },
   { label: 'Eventos', to: '/eventos', icon: CalendarFold },
   { label: 'Premios', to: '/premios', icon: Trophy },
   { label: 'Publicaciones', to: '/publicaciones', icon: BookOpenCheck },
+  { label: 'Reportes', to: '/reportes', icon: BookOpenCheck },
   user.value?.role === 'ADMIN'
     ? { label: 'Usuarios', to: '/usuarios', icon: Users }
     : null

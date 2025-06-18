@@ -1,3 +1,5 @@
+import type { Evaluation } from './Evaluation';
+
 export interface Professors {
   id: string;
   nombre: string;
@@ -10,6 +12,7 @@ export interface Professors {
   correos: { etiqueta: string; correo: string }[];
   telefonos: { etiqueta: string; numero: string }[];
   drEspecialidadAfin?: 'SI' | 'NO' | null;
+  evaluations?: Evaluation[];
 }
 
 export const mockProfessors: Professors[] = [

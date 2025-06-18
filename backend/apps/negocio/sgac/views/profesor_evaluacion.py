@@ -52,7 +52,10 @@ class ProfesorEvaluacionViewSet(
     }
 
     def get_queryset(self):
-        return self.queryset.filter(profesor=self.obtener_profesor())
+        id_profesor = self.kwargs.get('id_profesor')
+        if id_profesor:
+            return self.queryset.filter(profesor_id=id_profesor)
+        return self.queryset
 
     def obtener_profesor(self):
         return get_object_or_404(

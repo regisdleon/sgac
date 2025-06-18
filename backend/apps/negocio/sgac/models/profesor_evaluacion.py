@@ -6,10 +6,10 @@ from django.utils.translation import gettext_lazy as _
 class ProfesorEvaluacion(models.Model):
 
     class ValorEvaluacion(models.TextChoices):
-        EXCELENTE = "EXCELENTE", _("Excelente")
-        BIEN = "BIEN", _("Bien")
-        REGULAR = "REGULAR", _("Regular")
-        MAL = "MAL", _("Mal")
+        REGULAR = "R", _( "Regular" )
+        BIEN = "B", _( "Bien" )
+        EXCELENTE = "E", _( "Excelente" )
+        NO_PRESENTADO = "NP", _( "No Presentado" )
 
     profesor = models.ForeignKey(
         "Profesor", on_delete=models.CASCADE, db_column="id_profesor"
