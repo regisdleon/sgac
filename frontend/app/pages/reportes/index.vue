@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useProfessorStore } from '~/stores/professor'
 import CustomTable from '~/components/tables/CustomTable.vue'
 
@@ -11,6 +11,8 @@ const professorStore = useProfessorStore()
 const showClaustroReport = ref(false)
 const claustroData = ref([])
 const isReady = ref(false)
+const showExperienciaReport = ref(false)
+const experienciaData = ref([])
 
 const columns = [
   { accessorKey: 'categoria', header: 'Categoría' },
@@ -54,6 +56,35 @@ const claustroTableData = computed(() => {
   return Array.isArray(claustroData.value) ? claustroData.value.map(obj => ({ ...obj })) : []
 })
 
+const loadExperienciaData = () => {
+  const professors = professorStore.professors
+  const totalProfessors = professors.length
+  const totalExpMes = professors.reduce((sum, p) => sum + (Number(p.annosExperienciaMes) || 0), 0)
+  const avgExpMes = totalProfessors > 0 ? (totalExpMes / totalProfessors).toFixed(2) : 0
+  const profs10Plus = professors.filter(p => Number(p.annosExperienciaMes) >= 10)
+  const totalProfs10Plus = profs10Plus.length
+  const avgExpMes10Plus = totalProfs10Plus > 0 ? (profs10Plus.reduce((sum, p) => sum + (Number(p.annosExperienciaMes) || 0), 0) / totalProfs10Plus).toFixed(2) : 0
+  const porcentajeProfs10Plus = totalProfessors > 0 ? ((totalProfs10Plus / totalProfessors) * 100).toFixed(2) + '%' : '0%'
+  experienciaData.value = [
+    { descripcion: 'Experiencia del claustro', valor: avgExpMes },
+    { descripcion: 'Total de profesores con más de 10 años de experiencia', valor: totalProfs10Plus },
+    { descripcion: 'Porcentaje de profesores con más de 10 años de experiencia', valor: porcentajeProfs10Plus }
+  ]
+}
+
+watch(isReady, (ready) => {
+  if (ready) loadExperienciaData()
+})
+
+const experienciaTableData = computed(() => {
+  return Array.isArray(experienciaData.value) ? experienciaData.value.map(obj => ({ ...obj })) : []
+})
+
+const experienciaColumns = [
+  { accessorKey: 'descripcion', header: 'Descripción' },
+  { accessorKey: 'valor', header: 'Valor' }
+]
+
 onMounted(() => {
   loadClaustroData()
 })
@@ -95,6 +126,38 @@ onMounted(() => {
               empty-text="No hay datos para el reporte de claustro"
               :loading="professorStore.isLoading"
               :pageSize="20"
+            />
+          </div>
+        </Transition>
+      </div>
+
+      <!-- Reporte de Experiencia del Claustro -->
+      <div class="mb-6">
+        <UButton
+          @click="showExperienciaReport = !showExperienciaReport"
+          variant="ghost"
+          class="w-full flex justify-between items-center text-left"
+        >
+          <span class="font-semibold">Experiencia del claustro</span>
+          <span :class="'ml-2 ' + (showExperienciaReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+        </UButton>
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="opacity-0 transform scale-95"
+          enter-to-class="opacity-100 transform scale-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="opacity-100 transform scale-100"
+          leave-to-class="opacity-0 transform scale-95"
+        >
+          <div v-if="showExperienciaReport" class="mt-4">
+            <CustomTable
+              v-if="isReady"
+              title="Experiencia del claustro"
+              :data="experienciaTableData"
+              :columns="experienciaColumns"
+              empty-text="No hay datos para el reporte de experiencia"
+              :loading="professorStore.isLoading"
+              :pageSize="10"
             />
           </div>
         </Transition>
