@@ -4,6 +4,9 @@ import { useProfessorStore } from '~/stores/professor'
 import CustomTable from '~/components/tables/CustomTable.vue'
 import { usePublicationStore } from '~/pages/publicaciones/store'
 import { useEventStore } from '~/pages/eventos/store'
+import { useCareerStore } from '~/stores/career'
+import { useDisciplineStore } from '~/pages/disciplinas/store'
+import { useSubjectStore } from '~/pages/asignaturas/store'
 
 definePageMeta({
   layout: 'dashboard'
@@ -21,6 +24,12 @@ const showPublicacionesReport = ref(false)
 const publicacionesData = ref([])
 const showPonenciasReport = ref(false)
 const ponenciasData = ref([])
+const showClaustroAsignaturasReport = ref(false)
+const claustroAsignaturasData = ref([])
+const selectedCareer = ref(null)
+const careerStore = useCareerStore()
+const disciplineStore = useDisciplineStore()
+const subjectStore = useSubjectStore()
 const ponenciasColumns = [
   { accessorKey: 'clasificacion', header: 'CLASIFICACIÓN' },
   { accessorKey: '2021', header: '2021' },
@@ -256,10 +265,75 @@ const loadPonenciasData = async () => {
   ponenciasData.value = [...data, nacionalInternacional, totalRow]
 }
 
+const careerOptions = computed(() => {
+  return careerStore.careers.map(career => ({
+    label: career.nombre,
+    value: career
+  }))
+})
+
+const claustroAsignaturasColumns = [
+  { accessorKey: 'asignatura', header: 'ASIGNATURA' },
+  { accessorKey: 'codigo', header: 'CÓDIGO' },
+  { accessorKey: 'total', header: 'TOTAL' },
+  { accessorKey: 'PT', header: 'PT' },
+  { accessorKey: 'PA', header: 'PA' },
+  { accessorKey: 'A', header: 'A' },
+  { accessorKey: 'I', header: 'I' },
+  { accessorKey: 'DR', header: 'DR' },
+  { accessorKey: 'MC', header: 'MC' },
+  { accessorKey: 'cat_doc', header: 'CAT.DOC.' },
+  { accessorKey: 'gr_cient', header: 'GR.CIENT.' },
+  { accessorKey: 'exper', header: 'EXPER.' },
+]
+
+const loadClaustroAsignaturasData = async () => {
+  claustroAsignaturasData.value = []
+  if (!selectedCareer.value) return
+  await disciplineStore.fetchDisciplines(selectedCareer.value.id)
+  const disciplines = disciplineStore.disciplines
+  let allSubjects = []
+  for (const disc of disciplines) {
+    await subjectStore.fetchSubjects() // Asume que filtra por disciplina/carrera
+    const subjects = subjectStore.subjects.filter(s => s.disciplina.id === disc.id)
+    allSubjects.push(...subjects)
+  }
+  // Para cada asignatura, obtener profesores y calcular distribución
+  claustroAsignaturasData.value = allSubjects.map(asig => {
+    const profesores = asig.profesores || []
+    const total = profesores.length
+    const PT = profesores.filter(p => p.categoriaDocente === 'TITULAR').length
+    const PA = profesores.filter(p => p.categoriaDocente === 'AUXILIAR').length
+    const A = profesores.filter(p => p.categoriaDocente === 'ASISTENTE').length
+    const I = profesores.filter(p => p.categoriaDocente === 'INSTRUCTOR').length
+    const DR = profesores.filter(p => p.gradoCientifico === 'DOCTOR').length
+    const MC = profesores.filter(p => p.gradoCientifico === 'MASTER').length
+    // Profesor principal: mayor experiencia MES
+    let profPrincipal = null
+    if (profesores.length > 0) {
+      profPrincipal = profesores.reduce((max, p) => (p.annosExperienciaMes > (max?.annosExperienciaMes || 0) ? p : max), profesores[0])
+    }
+    return {
+      asignatura: asig.nombre,
+      codigo: asig.codigo,
+      total: total,
+      PT, PA, A, I, DR, MC,
+      cat_doc: profPrincipal?.categoriaDocente || '',
+      gr_cient: profPrincipal?.gradoCientifico || '',
+      exper: profPrincipal?.annosExperienciaMes || '',
+    }
+  })
+}
+
+watch(selectedCareer, () => {
+  loadClaustroAsignaturasData()
+})
+
 onMounted(() => {
   loadClaustroData()
   loadPublicacionesData()
   loadPonenciasData()
+  careerStore.fetchCareers()
 })
 </script>
 
@@ -267,167 +341,212 @@ onMounted(() => {
   <div>
     <UCard>
       <template #header>
-        <div class="flex justify-between items-center">
-          <h2 class="text-xl font-semibold">Reportes</h2>
+        <div class="flex flex-col gap-4">
+          <div class="flex justify-between items-center">
+            <h2 class="text-xl font-semibold">Reportes</h2>
+          </div>
+          <div class="w-full max-w-md">
+            <UFormGroup label="Carrera">
+              <USelect
+                v-model="selectedCareer"
+                :items="careerOptions"
+                item-attribute="label"
+                value-attribute="value"
+                placeholder="Seleccione una carrera"
+                :loading="careerStore.isLoading"
+                class="w-full"
+              />
+            </UFormGroup>
+          </div>
         </div>
       </template>
-      
-      <!-- Reporte de Claustro -->
-      <div class="mb-6">
-        <UButton
-          @click="showClaustroReport = !showClaustroReport"
-          variant="ghost"
-          class="w-full flex justify-between items-center text-left"
-        >
-          <span class="font-semibold">Reporte de Claustro</span>
-          <span :class="'ml-2 ' + (showClaustroReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
-        </UButton>
-        <Transition
-          enter-active-class="transition ease-out duration-200"
-          enter-from-class="opacity-0 transform scale-95"
-          enter-to-class="opacity-100 transform scale-100"
-          leave-active-class="transition ease-in duration-150"
-          leave-from-class="opacity-100 transform scale-100"
-          leave-to-class="opacity-0 transform scale-95"
-        >
-          <div v-if="showClaustroReport" class="mt-4">
-            <CustomTable
-              v-if="isReady"
-              title="Reporte de Claustro"
-              :data="claustroTableData"
-              :columns="columns"
-              empty-text="No hay datos para el reporte de claustro"
-              :loading="professorStore.isLoading"
-              :pageSize="20"
-            />
-          </div>
-        </Transition>
+      <div v-if="!selectedCareer" class="p-8 text-center text-gray-500">
+        Seleccione una carrera para ver los reportes
       </div>
-
-      <!-- Reporte de Experiencia del Claustro -->
-      <div class="mb-6">
-        <UButton
-          @click="showExperienciaReport = !showExperienciaReport"
-          variant="ghost"
-          class="w-full flex justify-between items-center text-left"
-        >
-          <span class="font-semibold">Experiencia del claustro</span>
-          <span :class="'ml-2 ' + (showExperienciaReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
-        </UButton>
-        <Transition
-          enter-active-class="transition ease-out duration-200"
-          enter-from-class="opacity-0 transform scale-95"
-          enter-to-class="opacity-100 transform scale-100"
-          leave-active-class="transition ease-in duration-150"
-          leave-from-class="opacity-100 transform scale-100"
-          leave-to-class="opacity-0 transform scale-95"
-        >
-          <div v-if="showExperienciaReport" class="mt-4">
-            <CustomTable
-              v-if="isReady"
-              title="Experiencia del claustro"
-              :data="experienciaTableData"
-              :columns="experienciaColumns"
-              empty-text="No hay datos para el reporte de experiencia"
-              :loading="professorStore.isLoading"
-              :pageSize="10"
-            />
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Reporte de Grados Científicos -->
-      <div class="mb-6">
-        <UButton
-          @click="showGradosReport = !showGradosReport"
-          variant="ghost"
-          class="w-full flex justify-between items-center text-left"
-        >
-          <span class="font-semibold">Reporte de grados científicos</span>
-          <span :class="'ml-2 ' + (showGradosReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
-        </UButton>
-        <Transition
-          enter-active-class="transition ease-out duration-200"
-          enter-from-class="opacity-0 transform scale-95"
-          enter-to-class="opacity-100 transform scale-100"
-          leave-active-class="transition ease-in duration-150"
-          leave-from-class="opacity-100 transform scale-100"
-          leave-to-class="opacity-0 transform scale-95"
-        >
-          <div v-if="showGradosReport" class="mt-4">
-            <CustomTable
-              v-if="isReady"
-              title="Reporte de grados científicos"
-              :data="gradosTableData"
-              :columns="gradosColumns"
-              empty-text="No hay datos para el reporte de grados científicos"
-              :loading="professorStore.isLoading"
-              :pageSize="10"
-            />
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Reporte de Publicaciones -->
-      <div class="mb-6">
-        <UButton
-          @click="showPublicacionesReport = !showPublicacionesReport"
-          variant="ghost"
-          class="w-full flex justify-between items-center text-left"
-        >
-          <span class="font-semibold">Reporte de Publicaciones</span>
-          <span :class="'ml-2 ' + (showPublicacionesReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
-        </UButton>
-        <Transition
-          enter-active-class="transition ease-out duration-200"
-          enter-from-class="opacity-0 transform scale-95"
-          enter-to-class="opacity-100 transform scale-100"
-          leave-active-class="transition ease-in duration-150"
-          leave-from-class="opacity-100 transform scale-100"
-          leave-to-class="opacity-0 transform scale-95"
-        >
-          <div v-if="showPublicacionesReport" class="mt-4">
-            <CustomTable
-              :title="'Reporte de Publicaciones'"
-              :data="publicacionesData"
-              :columns="publicacionesColumns"
-              empty-text="No hay datos para el reporte de publicaciones"
-              :loading="publicationStore.isLoading"
-              :pageSize="20"
-            />
-          </div>
-        </Transition>
-      </div>
-
-      <!-- Reporte de Presentación de Ponencias en Eventos -->
-      <div class="mb-6">
-        <UButton
-          @click="showPonenciasReport = !showPonenciasReport"
-          variant="ghost"
-          class="w-full flex justify-between items-center text-left"
-        >
-          <span class="font-semibold">Presentación de ponencias en eventos</span>
-          <span :class="'ml-2 ' + (showPonenciasReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
-        </UButton>
-        <Transition
-          enter-active-class="transition ease-out duration-200"
-          enter-from-class="opacity-0 transform scale-95"
-          enter-to-class="opacity-100 transform scale-100"
-          leave-active-class="transition ease-in duration-150"
-          leave-from-class="opacity-100 transform scale-100"
-          leave-to-class="opacity-0 transform scale-95"
-        >
-          <div v-if="showPonenciasReport" class="mt-4">
-            <CustomTable
-              :title="'Presentación de ponencias en eventos'"
-              :data="ponenciasData"
-              :columns="ponenciasColumns"
-              empty-text="No hay datos para el reporte de ponencias en eventos"
-              :loading="eventStore.isLoading"
-              :pageSize="20"
-            />
-          </div>
-        </Transition>
+      <div v-else>
+        <!-- Reporte de Claustro -->
+        <div class="mb-6">
+          <UButton
+            @click="showClaustroReport = !showClaustroReport"
+            variant="ghost"
+            class="w-full flex justify-between items-center text-left"
+          >
+            <span class="font-semibold">Reporte de Claustro</span>
+            <span :class="'ml-2 ' + (showClaustroReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+          </UButton>
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+          >
+            <div v-if="showClaustroReport" class="mt-4">
+              <CustomTable
+                v-if="isReady"
+                title="Reporte de Claustro"
+                :data="claustroTableData"
+                :columns="columns"
+                empty-text="No hay datos para el reporte de claustro"
+                :loading="professorStore.isLoading"
+                :pageSize="20"
+              />
+            </div>
+          </Transition>
+        </div>
+        <!-- Reporte de Experiencia del Claustro -->
+        <div class="mb-6">
+          <UButton
+            @click="showExperienciaReport = !showExperienciaReport"
+            variant="ghost"
+            class="w-full flex justify-between items-center text-left"
+          >
+            <span class="font-semibold">Experiencia del claustro</span>
+            <span :class="'ml-2 ' + (showExperienciaReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+          </UButton>
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+          >
+            <div v-if="showExperienciaReport" class="mt-4">
+              <CustomTable
+                v-if="isReady"
+                title="Experiencia del claustro"
+                :data="experienciaTableData"
+                :columns="experienciaColumns"
+                empty-text="No hay datos para el reporte de experiencia"
+                :loading="professorStore.isLoading"
+                :pageSize="10"
+              />
+            </div>
+          </Transition>
+        </div>
+        <!-- Reporte de Grados Científicos -->
+        <div class="mb-6">
+          <UButton
+            @click="showGradosReport = !showGradosReport"
+            variant="ghost"
+            class="w-full flex justify-between items-center text-left"
+          >
+            <span class="font-semibold">Grados científicos del claustro</span>
+            <span :class="'ml-2 ' + (showGradosReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+          </UButton>
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+          >
+            <div v-if="showGradosReport" class="mt-4">
+              <CustomTable
+                v-if="isReady"
+                title="Grados científicos del claustro"
+                :data="gradosTableData"
+                :columns="gradosColumns"
+                empty-text="No hay datos para el reporte de grados"
+                :loading="professorStore.isLoading"
+                :pageSize="10"
+              />
+            </div>
+          </Transition>
+        </div>
+        <!-- Reporte de Publicaciones -->
+        <div class="mb-6">
+          <UButton
+            @click="showPublicacionesReport = !showPublicacionesReport"
+            variant="ghost"
+            class="w-full flex justify-between items-center text-left"
+          >
+            <span class="font-semibold">Reporte de Publicaciones</span>
+            <span :class="'ml-2 ' + (showPublicacionesReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+          </UButton>
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+          >
+            <div v-if="showPublicacionesReport" class="mt-4">
+              <CustomTable
+                :title="'Reporte de Publicaciones'"
+                :data="publicacionesData"
+                :columns="publicacionesColumns"
+                empty-text="No hay datos para el reporte de publicaciones"
+                :loading="publicationStore.isLoading"
+                :pageSize="20"
+              />
+            </div>
+          </Transition>
+        </div>
+        <!-- Reporte de Presentación de Ponencias en Eventos -->
+        <div class="mb-6">
+          <UButton
+            @click="showPonenciasReport = !showPonenciasReport"
+            variant="ghost"
+            class="w-full flex justify-between items-center text-left"
+          >
+            <span class="font-semibold">Presentación de ponencias en eventos</span>
+            <span :class="'ml-2 ' + (showPonenciasReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+          </UButton>
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+          >
+            <div v-if="showPonenciasReport" class="mt-4">
+              <CustomTable
+                :title="'Presentación de ponencias en eventos'"
+                :data="ponenciasData"
+                :columns="ponenciasColumns"
+                empty-text="No hay datos para el reporte de ponencias en eventos"
+                :loading="eventStore.isLoading"
+                :pageSize="20"
+              />
+            </div>
+          </Transition>
+        </div>
+        <!-- Reporte de Distribución del Claustro por Asignaturas -->
+        <div class="mb-6">
+          <UButton
+            @click="showClaustroAsignaturasReport = !showClaustroAsignaturasReport"
+            variant="ghost"
+            class="w-full flex justify-between items-center text-left"
+          >
+            <span class="font-semibold">Distribución del claustro por asignaturas</span>
+            <span :class="'ml-2 ' + (showClaustroAsignaturasReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+          </UButton>
+          <Transition
+            enter-active-class="transition ease-out duration-200"
+            enter-from-class="opacity-0 transform scale-95"
+            enter-to-class="opacity-100 transform scale-100"
+            leave-active-class="transition ease-in duration-150"
+            leave-from-class="opacity-100 transform scale-100"
+            leave-to-class="opacity-0 transform scale-95"
+          >
+            <div v-if="showClaustroAsignaturasReport" class="mt-4">
+              <CustomTable
+                :title="'Distribución del claustro por asignaturas'"
+                :data="claustroAsignaturasData"
+                :columns="claustroAsignaturasColumns"
+                empty-text="No hay datos para el reporte de claustro por asignaturas"
+                :loading="subjectStore.isLoading || disciplineStore.isLoading"
+                :pageSize="30"
+              />
+            </div>
+          </Transition>
+        </div>
       </div>
     </UCard>
   </div>
