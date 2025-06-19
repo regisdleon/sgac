@@ -2,12 +2,23 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from "#ui/types";
 import { usePublicationStore } from "~/pages/publicaciones/store";
+import { useProfessorStore } from '~/stores/professor'
+import { useCareerStore } from '~/stores/career'
 
 definePageMeta( { layout : 'dashboard' } )
 
 const toast = useToast()
 const router = useRouter()
 const publicationStore = usePublicationStore()
+const professorStore = useProfessorStore()
+const careerStore = useCareerStore()
+const selectedCareer = computed(() => careerStore.selectedCareer)
+const filteredProfessors = computed(() => {
+  if (!selectedCareer.value) return []
+  return professorStore.professors.filter(p => p.carreraId === selectedCareer.value.id)
+})
+const authorPrincipal = ref(null)
+const coauthors = ref([])
 
 const schema = z.object({
   id: z.string().optional(),
@@ -38,6 +49,7 @@ const state = reactive<SchemaType>({
 
 onMounted(async () => {
   await publicationStore.fetchPublicationClassifications();
+  await professorStore.fetchProfessors();
 });
 
 // Opciones para los selects
@@ -65,17 +77,29 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
     anno: Number(event.data.anno),
     nivel: Number(event.data.nivel),
   }
-  console.log('Payload being sent:', payload)
   const result = await publicationStore.createPublication(payload)
-
   if (result) {
+    // Crear relación autor principal
+    if (authorPrincipal.value) {
+      await $fetch(`/api/publicaciones/${result.id}/profesores`, {
+        method: 'POST',
+        body: { profesor: authorPrincipal.value, participacion: 'AUTOR_PRINCIPAL' }
+      })
+    }
+    // Crear relaciones coautores
+    for (const coauthorId of coauthors.value) {
+      await $fetch(`/api/publicaciones/${result.id}/profesores`, {
+        method: 'POST',
+        body: { profesor: coauthorId, participacion: 'COAUTOR' }
+      })
+    }
     toast.add({
       title: 'Publicación registrada',
       description: 'La publicación se ha guardado correctamente',
       color: 'success',
       icon: 'i-heroicons-check-circle-20-solid'
     })
-    router.push('/publicaciones') // Redirigir a la lista
+    router.push('/publicaciones')
   } else {
     toast.add({
       title: 'Error',
@@ -118,6 +142,25 @@ async function onSubmit(event: FormSubmitEvent<SchemaType>) {
                 min="1900"
                 :max="new Date().getFullYear()"
                 placeholder="Año"
+            />
+          </UFormField>
+        </div>
+
+        <!-- NUEVO: Autor principal y Coautores -->
+        <div class="grid grid-cols-2 w-full gap-4">
+          <UFormField label="Autor principal" required>
+            <USelect
+              v-model="authorPrincipal"
+              :items="professorStore.professors.map(prof => ({ label: `${prof.nombre} ${prof.primerApellido} ${prof.segundoApellido || ''}`, value: prof.id }))"
+              placeholder="Seleccione el autor principal"
+            />
+          </UFormField>
+          <UFormField label="Coautores">
+            <USelect
+              v-model="coauthors"
+              :items="professorStore.professors.map(prof => ({ label: `${prof.nombre} ${prof.primerApellido} ${prof.segundoApellido || ''}`, value: prof.id }))"
+              multiple
+              placeholder="Seleccione los coautores"
             />
           </UFormField>
         </div>

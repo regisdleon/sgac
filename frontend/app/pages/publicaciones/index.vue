@@ -80,6 +80,16 @@ const columns : TableColumn<Publication>[] = [
     header: 'Nivel',
     cell: ({ row }) => row.original.nivel ? `Nivel ${row.original.nivel}` : 'N/A'
   },
+  { 
+    accessorKey: 'autorPrincipal', 
+    header: 'Autor Principal',
+    cell: ({ row }) => row.original.autorPrincipalNombre || 'N/A'
+  },
+  { 
+    accessorKey: 'coautores', 
+    header: 'Coautores',
+    cell: ({ row }) => row.original.coautoresNombres?.join(', ') || 'N/A'
+  },
   {
     id: 'action',
     header: () => h('div', { class: 'flex justify-end flex-row pr-8' }, 'Acciones'),

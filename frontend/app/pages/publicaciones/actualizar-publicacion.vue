@@ -2,8 +2,10 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from "#ui/types";
 import { usePublicationStore } from "~/pages/publicaciones/store";
-import { onMounted, reactive, watchEffect } from 'vue';
+import { onMounted, reactive, watchEffect, computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useProfessorStore } from '~/stores/professor'
+import { useCareerStore } from '~/stores/career'
 
 definePageMeta( { layout : 'dashboard' } )
 
@@ -11,6 +13,15 @@ const toast = useToast()
 const router = useRouter()
 const route = useRoute()
 const publicationStore = usePublicationStore()
+const professorStore = useProfessorStore()
+const careerStore = useCareerStore()
+const selectedCareer = computed(() => careerStore.selectedCareer)
+const filteredProfessors = computed(() => {
+  if (!selectedCareer.value) return []
+  return professorStore.professors.filter(p => p.carreraId === selectedCareer.value.id)
+})
+const authorPrincipal = ref(null)
+const coauthors = ref([])
 
 const schema = z.object({
   id: z.string().optional(),
@@ -44,6 +55,13 @@ onMounted(async () => {
   const publicationId = route.params.id as string;
   if (publicationId) {
     await publicationStore.fetchPublicationById(publicationId);
+  }
+  await professorStore.fetchProfessors();
+  // Cargar autores actuales si existen
+  if (publicationStore.currentPublication) {
+    const autores = await $fetch(`/api/publicaciones/${publicationStore.currentPublication.id}/profesores`)
+    authorPrincipal.value = autores.find(a => a.participacion === 'AUTOR_PRINCIPAL')?.profesor || null
+    coauthors.value = autores.filter(a => a.participacion === 'COAUTOR').map(a => a.profesor)
   }
 });
 
@@ -81,22 +99,34 @@ const levelOptions = [
 ]
 
 // Enviar datos
-async function onSubmit(e?: Event) {
-  // Usar directamente el state
+async function onSubmit(e) {
   const payload = {
     ...state,
     anno: Number(state.anno),
     nivel: Number(state.nivel),
   }
   const result = await publicationStore.updatePublication(payload)
-
   if (result) {
+    // Actualizar relaciones autor principal y coautores
+    await $fetch(`/api/publicaciones/${result.id}/profesores`, { method: 'DELETE' }) // Eliminar relaciones previas
+    if (authorPrincipal.value) {
+      await $fetch(`/api/publicaciones/${result.id}/profesores`, {
+        method: 'POST',
+        body: { profesor: authorPrincipal.value, participacion: 'AUTOR_PRINCIPAL' }
+      })
+    }
+    for (const coauthorId of coauthors.value) {
+      await $fetch(`/api/publicaciones/${result.id}/profesores`, {
+        method: 'POST',
+        body: { profesor: coauthorId, participacion: 'COAUTOR' }
+      })
+    }
     toast.add({
       title: 'Publicación actualizada',
       description: 'La publicación se ha actualizado correctamente',
       color: 'success'
     })
-    router.push('/publicaciones') // Redirigir a la lista
+    router.push('/publicaciones')
   } else {
     toast.add({
       title: 'Error',
@@ -136,6 +166,25 @@ async function onSubmit(e?: Event) {
                 min="1900"
                 :max="new Date().getFullYear()"
                 placeholder="Año"
+            />
+          </UFormField>
+        </div>
+
+        <!-- NUEVO: Autor principal y Coautores -->
+        <div class="grid grid-cols-2 w-full gap-4">
+          <UFormField label="Autor principal" required>
+            <USelect
+              v-model="authorPrincipal"
+              :items="professorStore.professors.map(prof => ({ label: `${prof.nombre} ${prof.primerApellido} ${prof.segundoApellido || ''}`, value: prof.id }))"
+              placeholder="Seleccione el autor principal"
+            />
+          </UFormField>
+          <UFormField label="Coautores">
+            <USelect
+              v-model="coauthors"
+              :items="professorStore.professors.map(prof => ({ label: `${prof.nombre} ${prof.primerApellido} ${prof.segundoApellido || ''}`, value: prof.id }))"
+              multiple
+              placeholder="Seleccione los coautores"
             />
           </UFormField>
         </div>
