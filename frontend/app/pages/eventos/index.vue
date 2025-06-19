@@ -14,6 +14,10 @@ const router = useRouter()
 const showConfirmModal = ref( false )
 const eventStore = useEventStore()
 
+const tableKey = computed(() => {
+  return eventStore.events.map(e => e.id).join('-');
+});
+
 function onShowConfirmModalUpdate( value : boolean ) {
   showConfirmModal.value = value
   if (!value) {
@@ -26,13 +30,24 @@ const { pending, error } = useAsyncData(
   async () => {
     await eventStore.fetchEvents();
   },
-  { server: true } // Fetch on server and client
+  { server: false } // Deshabilitamos el renderizado en servidor para esta carga de datos
 );
 
 const columns : TableColumn<Event>[] = [
   { accessorKey : 'anno', header : 'Año' },
   { accessorKey : 'titulo', header : 'Título' },
   { accessorKey : 'titulo_corto', header : 'Título Corto' },
+  {
+    id: 'profesor',
+    header: 'Profesor',
+    accessorKey: 'profesor',
+    cell: ({ row }) => {
+      console.log('Row data for profesor:', row.original);
+      const profesor = row.original.profesor;
+      if (!profesor) return 'N/A';
+      return `${profesor.nombre} ${profesor.primerApellido} ${profesor.segundoApellido || ''}`.trim();
+    }
+  },
   {
     id: 'clasificacion',
     key: 'clasificacion',
@@ -103,11 +118,12 @@ const deleteEvent = async () => {
 <template>
   <CustomTable
       title="Eventos"
-      :data="eventStore.events || []"
+      :data="[...(eventStore.events || [])]"
       :columns="columns"
       :error="eventStore.error"
       empty-text="No hay eventos registrados"
       :loading="eventStore.isLoading"
+      :key="tableKey"
   >
     <template #register-button>
       <UButton @click="router.push('/eventos/registrar-evento/')">Registrar evento</UButton>

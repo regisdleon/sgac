@@ -1,6 +1,7 @@
 from drf_spectacular.utils import extend_schema_view, extend_schema
 from rest_framework import viewsets
 from rest_framework.generics import get_object_or_404
+from rest_framework.response import Response
 
 from apps.negocio.sgac.models import (
     ProfesorPublicacion,
@@ -11,7 +12,6 @@ from apps.negocio.sgac.models import (
 from apps.negocio.sgac.views.serializers.profesor_evaluacion import (
     ProfesorEvaluacionSerializer,
 )
-from general.mixins import ObtenerPorMultiplesCamposMixin
 
 
 @extend_schema_view(
@@ -41,7 +41,6 @@ from general.mixins import ObtenerPorMultiplesCamposMixin
     ),
 )
 class ProfesorEvaluacionViewSet(
-    ObtenerPorMultiplesCamposMixin,
     viewsets.ModelViewSet,
 ):
     queryset = ProfesorEvaluacion.objects.all()
@@ -52,13 +51,20 @@ class ProfesorEvaluacionViewSet(
     }
 
     def get_queryset(self):
+        qs = ProfesorEvaluacion.objects.all()
         id_profesor = self.kwargs.get('id_profesor')
         if id_profesor:
-            return self.queryset.filter(profesor_id=id_profesor)
-        return self.queryset
+            return qs.filter(profesor_id=id_profesor)
+        return qs
 
     def obtener_profesor(self):
         return get_object_or_404(
             Profesor.objects.all(),
             pk=self.kwargs["id_profesor"],
         )
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        # Desactivar paginación: devolver todos los resultados
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)

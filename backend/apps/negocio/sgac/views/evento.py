@@ -32,7 +32,7 @@ from apps.negocio.sgac.views.serializers.evento import EventoSerializer
     ),
 )
 class EventoViewSet(viewsets.ModelViewSet):
-    queryset = Evento.objects.all()
+    queryset = Evento.objects.prefetch_related('profesorevento_set__profesor').all()
     serializer_class = EventoSerializer
     lookup_url_kwarg = "id_evento"
     lookup_field = "pk"

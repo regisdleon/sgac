@@ -2,13 +2,19 @@
 import { z } from 'zod'
 import type { FormSubmitEvent } from "#ui/types";
 import { useEventStore } from '~/pages/eventos/store'
-import { computed, reactive } from 'vue'
+import { computed, reactive, onMounted } from 'vue'
+import { useProfessorStore } from '~/stores/professor'
 
 definePageMeta( { layout : 'dashboard' } )
 
 const toast = useToast()
 const router = useRouter()
 const eventsStore = useEventStore()
+const professorStore = useProfessorStore()
+
+onMounted(async () => {
+  await professorStore.fetchProfessors?.();
+})
 
 const clasificacionesOptions = computed(() => {
   return eventsStore.classifications.map(c => ({
@@ -17,11 +23,19 @@ const clasificacionesOptions = computed(() => {
   }))
 })
 
+const professorOptions = computed(() => {
+  return (professorStore.professors || []).map(p => ({
+    label: `${p.nombre} ${p.primerApellido}`,
+    value: String(p.id)
+  }))
+})
+
 const schema = z.object({
   titulo: z.string().min(1, 'Requerido'),
   titulo_corto: z.string().min(1, 'Requerido'),
   anno: z.coerce.number().min(1, 'Requerido'),
   clasificacion: z.string().min(1, 'Requerido'),
+  profesor_id: z.union([z.string(), z.number()]).transform(val => String(val)),
 })
 
 type SchemaType = z.infer<typeof schema>;
@@ -31,11 +45,11 @@ const state = reactive<SchemaType>({
   titulo_corto: '',
   anno: 0,
   clasificacion: '',
+  profesor_id: '',
 })
 
 // Enviar datos
 async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
-
   console.debug( "event", event );
   const result = await eventsStore.createEvent( event.data )
 
@@ -44,13 +58,13 @@ async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
       title : `Evento creado`,
       color : 'success'
     } )
+    router.push('/eventos')
   } else {
     toast.add( {
       title : eventsStore.error! || 'Error al registrar el evento',
       color : 'error',
     } )
   }
-
 }
 </script>
 
@@ -71,6 +85,15 @@ async function onSubmit( event : FormSubmitEvent<SchemaType> ) {
 
         <UFormField label="Título Corto" name="titulo_corto" required>
           <UInput class="w-full" v-model="state.titulo_corto"/>
+        </UFormField>
+
+        <UFormField label="Profesor" name="profesor_id" required>
+          <USelect
+            class="w-full"
+            v-model="state.profesor_id"
+            :items="professorOptions"
+            :loading="!professorStore.professors"
+          />
         </UFormField>
 
         <UFormField label="Clasificación" name="clasificacion" required>

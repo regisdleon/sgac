@@ -1,6 +1,7 @@
 // stores/event.ts
 import { defineStore } from 'pinia'
 import type { Event } from '~/models/Event'
+import type { Professors } from '~/models/Professors'
 
 export const useEventStore = defineStore('eventStore', {
   state: () => ({
@@ -40,54 +41,24 @@ export const useEventStore = defineStore('eventStore', {
 	 * Carga todos los eventos desde el backend
 	 */
 	async fetchEvents() {
-	  console.log('Starting fetchEvents...');
 	  this.isLoading = true
 	  this.error = null
 	  
 	  try {
-		console.log('Making API call to /api/events...');
-		const { data, error } = await useFetch('/api/events')
-		
-		console.log('Raw response from /api/events:', data.value);
-		console.log('Response error from /api/events:', error.value);
-		console.log('First event in response:', data.value?.events?.[0]);
+		const { data, error } = await useFetch<Event[]>('/api/eventos/')
 
 		if (error.value) {
 		  this.error = error.value.message || 'Error al cargar los eventos'
+		  this.events = []
 		  return
 		}
-		
-		if (!data.value?.events) {
-		  console.warn('No events found in response:', data.value);
-		  this.events = [];
-		  return;
-		}
 
-		type Clasificacion = 'INTERNACIONAL' | 'NACIONAL' | 'PROVINCIAL' | 'MUNICIPAL' | 'DE_BASE';
-		type BackendEvent = {
-		  id: string;
-		  anno: number;
-		  titulo: string;
-		  titulo_corto?: string;
-		  tituloCorto?: string;
-		  clasificacion: Clasificacion;
-		};
+		// Asignación directa. La data ya debería coincidir con la interfaz Event[].
+		this.events = data.value || []
 
-		const eventsData = data.value.events as Array<BackendEvent>;
-
-		this.events = eventsData.map((event) => {
-		  console.log('Processing event:', event);
-		  return {
-			id: event.id,
-			anno: event.anno,
-			titulo: event.titulo,
-			titulo_corto: event.titulo_corto || event.tituloCorto || 'N/A',
-			clasificacion: event.clasificacion
-		  };
-		});
-		console.log('Mapped events:', this.events);
 	  } catch (err) {
-		this.error = err instanceof Error ? err.message : 'Error al cargar los eventos'
+		this.error = err instanceof Error ? err.message : 'Error de conexión'
+		this.events = []
 		console.error('Error fetching events:', err)
 	  } finally {
 		this.isLoading = false
@@ -102,7 +73,7 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch(`/api/events/${id}`)
+		const { data, error } = await useFetch(`/api/eventos/${id}`)
 		
 		if (error.value) {
 		  this.error = error.value.message || 'Evento no encontrado'
@@ -129,7 +100,7 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch('/api/events', {
+		const { data, error } = await useFetch('/api/eventos', {
 		  method: 'POST',
 		  body: eventData
 		})
@@ -151,6 +122,8 @@ export const useEventStore = defineStore('eventStore', {
 			titulo_corto?: string;
 			tituloCorto?: string;
 			clasificacion: Clasificacion;
+			profesor_id?: string;
+			profesor?: any;
 		  };
 		  const responseData = data.value as BackendSingleEvent;
 		  
@@ -159,7 +132,9 @@ export const useEventStore = defineStore('eventStore', {
 			anno: responseData.anno,
 			titulo: responseData.titulo,
 			titulo_corto: responseData.titulo_corto || responseData.tituloCorto || 'N/A',
-			clasificacion: responseData.clasificacion
+			clasificacion: responseData.clasificacion,
+			profesor_id: responseData.profesor_id,
+			profesor: responseData.profesor
 		  };
 		  console.log('Adding new event to store:', newEvent);
 		  this.events.push(newEvent);
@@ -183,7 +158,7 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { data, error } = await useFetch(`/api/events/${updatedEvent.id}`, {
+		const { data, error } = await useFetch(`/api/eventos/${updatedEvent.id}`, {
 		  method: 'PATCH',
 		  body: updatedEvent
 		})
@@ -218,7 +193,7 @@ export const useEventStore = defineStore('eventStore', {
 	  this.error = null
 	  
 	  try {
-		const { error } = await useFetch(`/api/events/${id}`, {
+		const { error } = await useFetch(`/api/eventos/${id}`, {
 		  method: 'DELETE'
 		})
 		

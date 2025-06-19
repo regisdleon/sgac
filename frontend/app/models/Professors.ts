@@ -1,7 +1,7 @@
 import type { Evaluation } from './Evaluation';
 
 export interface Professors {
-  id: string;
+  id: string | number;
   nombre: string;
   primerApellido: string;
   segundoApellido?: string;

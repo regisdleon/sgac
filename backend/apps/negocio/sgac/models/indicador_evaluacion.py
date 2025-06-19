@@ -16,7 +16,7 @@ class IndicadorEvaluacion(models.Model):
     nombre = models.CharField(max_length=255, db_column="nombre", choices=NombreIndicador.choices)
 
     def __str__(self):
-        pass
+        return self.nombre
 
     class Meta:
         db_table = 'sgac_indicadoresevaluacion'
