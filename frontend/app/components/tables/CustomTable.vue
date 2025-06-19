@@ -40,40 +40,7 @@ watch( searchTerm, () => {
 
 // Datos filtrados
 const filteredData = computed(() => {
-  console.log('Raw data received to filteredData:', data.value);
-  const dataToFilter = Array.isArray(data.value) ? data.value : []; 
-
-  if (!searchTerm.value) {
-    console.log('No search term, returning all data from filteredData:', dataToFilter);
-    return dataToFilter;
-  }
-
-  const term = searchTerm.value.toLowerCase();
-  const filtered = dataToFilter.filter(item =>
-    props.columns.some(col => {
-      if (!col.accessorKey) return false;
-      // Manejar accessorKey anidados y nulls/undefineds
-      let value = item;
-      if (typeof col.accessorKey === 'string') {
-        const keys = col.accessorKey.split('.');
-        for (const key of keys) {
-          if (value && typeof value === 'object' && key in value) {
-            value = value[key];
-          } else {
-            value = undefined; // Si la propiedad no existe, el valor es undefined
-            break;
-          }
-        }
-      } else {
-        // Fallback si accessorKey no es string o no está definido
-        value = undefined;
-      }
-      
-      return String(value || '').toLowerCase().includes(term); // Asegurar que el valor sea un string
-    })
-  );
-  console.log('Filtered data from filteredData:', filtered);
-  return filtered;
+  return data.value;
 });
 
 // Datos paginados
