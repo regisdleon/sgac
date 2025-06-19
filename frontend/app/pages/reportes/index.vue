@@ -13,6 +13,8 @@ const claustroData = ref([])
 const isReady = ref(false)
 const showExperienciaReport = ref(false)
 const experienciaData = ref([])
+const showGradosReport = ref(false)
+const gradosData = ref([])
 
 const columns = [
   { accessorKey: 'categoria', header: 'Categoría' },
@@ -83,6 +85,39 @@ const experienciaTableData = computed(() => {
 const experienciaColumns = [
   { accessorKey: 'descripcion', header: 'Descripción' },
   { accessorKey: 'valor', header: 'Valor' }
+]
+
+const loadGradosData = () => {
+  const professors = professorStore.professors
+  const totalClaustro = professors.length
+  const doctores = professors.filter(p => p.gradoCientifico === 'DOCTOR')
+  const totalDoctores = doctores.length
+  const drAfin = doctores.filter(p => p.drEspecialidadAfin === 'SI')
+  const totalDrAfin = drAfin.length
+  const masters = professors.filter(p => p.gradoCientifico === 'MASTER')
+  const totalMasters = masters.length
+  const porcentajeDoctores = totalClaustro > 0 ? ((totalDoctores / totalClaustro) * 100).toFixed(2) + '%' : '0%'
+  const porcentajeDrAfin = totalDoctores > 0 ? ((totalDrAfin / totalDoctores) * 100).toFixed(2) + '%' : '0%'
+  const porcentajeMasters = totalClaustro > 0 ? ((totalMasters / totalClaustro) * 100).toFixed(2) + '%' : '0%'
+  gradosData.value = [
+    { grado: 'Dr.C', total: totalDoctores, porcentaje: porcentajeDoctores },
+    { grado: 'Dr.C con especialidad afín', total: totalDrAfin, porcentaje: porcentajeDrAfin },
+    { grado: 'Master en Ciencias', total: totalMasters, porcentaje: porcentajeMasters }
+  ]
+}
+
+watch(isReady, (ready) => {
+  if (ready) loadGradosData()
+})
+
+const gradosTableData = computed(() => {
+  return Array.isArray(gradosData.value) ? gradosData.value.map(obj => ({ ...obj })) : []
+})
+
+const gradosColumns = [
+  { accessorKey: 'grado', header: 'Grado científico' },
+  { accessorKey: 'total', header: 'Total' },
+  { accessorKey: 'porcentaje', header: '%' }
 ]
 
 onMounted(() => {
@@ -156,6 +191,38 @@ onMounted(() => {
               :data="experienciaTableData"
               :columns="experienciaColumns"
               empty-text="No hay datos para el reporte de experiencia"
+              :loading="professorStore.isLoading"
+              :pageSize="10"
+            />
+          </div>
+        </Transition>
+      </div>
+
+      <!-- Reporte de Grados Científicos -->
+      <div class="mb-6">
+        <UButton
+          @click="showGradosReport = !showGradosReport"
+          variant="ghost"
+          class="w-full flex justify-between items-center text-left"
+        >
+          <span class="font-semibold">Reporte de grados científicos</span>
+          <span :class="'ml-2 ' + (showGradosReport ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down')" />
+        </UButton>
+        <Transition
+          enter-active-class="transition ease-out duration-200"
+          enter-from-class="opacity-0 transform scale-95"
+          enter-to-class="opacity-100 transform scale-100"
+          leave-active-class="transition ease-in duration-150"
+          leave-from-class="opacity-100 transform scale-100"
+          leave-to-class="opacity-0 transform scale-95"
+        >
+          <div v-if="showGradosReport" class="mt-4">
+            <CustomTable
+              v-if="isReady"
+              title="Reporte de grados científicos"
+              :data="gradosTableData"
+              :columns="gradosColumns"
+              empty-text="No hay datos para el reporte de grados científicos"
               :loading="professorStore.isLoading"
               :pageSize="10"
             />
