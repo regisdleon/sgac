@@ -14,7 +14,7 @@ import Sidebar, { type SidebarItem } from '@/components/navigation/Sidebar.vue';
 const { user } = useUserSession()
 
 const sidebarItems: any[] = [
-  { label: 'Dashboard', to: '/inicio', icon: Home },
+  { label: 'Inicio', to: '/inicio', icon: Home },
   { label: 'Carreras', to: '/carreras', icon: ComponentIcon },
   { label: 'Profesores', to: '/profesores', icon: LucidePenOff },
   { label: 'Evaluación', to: '/evaluacion-profesor', icon: Users },
@@ -37,7 +37,7 @@ const sidebarItems: any[] = [
       <LayoutDashboard class="w-6 h-6" />
     </template>
     <template #logo-text>
-      MiApp
+      SGAC
     </template>
   </Sidebar>
 </template>
