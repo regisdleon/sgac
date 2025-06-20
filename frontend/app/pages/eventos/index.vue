@@ -40,13 +40,8 @@ const columns : TableColumn<Event>[] = [
   {
     id: 'profesor',
     header: 'Profesor',
-    accessorKey: 'profesor',
-    cell: ({ row }) => {
-      console.log('Row data for profesor:', row.original);
-      const profesor = row.original.profesor;
-      if (!profesor) return 'N/A';
-      return `${profesor.nombre} ${profesor.primerApellido} ${profesor.segundoApellido || ''}`.trim();
-    }
+    accessorKey: 'profesor_nombre',
+    cell: ({ row }) => row.original.profesor_nombre || 'N/A'
   },
   {
     id: 'clasificacion',

@@ -7,7 +7,7 @@ export interface Event {
   titulo_corto: string;
   clasificacion: 'INTERNACIONAL' | 'NACIONAL' | 'PROVINCIAL' | 'MUNICIPAL' | 'DE_BASE';
   profesor_id?: string | number;
-  profesor?: Professors;
+  profesor_nombre?: string;
 }
 
 export const mockEvents: Event[] = [
@@ -18,19 +18,7 @@ export const mockEvents: Event[] = [
     titulo_corto: 'CIIA 2023',
     clasificacion: 'INTERNACIONAL',
     profesor_id: '1',
-    profesor: {
-      id: '1',
-      nombre: 'Juan',
-      primerApellido: 'Pérez',
-      segundoApellido: 'Gómez',
-      annosExperienciaCarrera: 10,
-      annosExperienciaMes: 5,
-      categoriaDocente: 'TITULAR',
-      gradoCientifico: 'DOCTOR_EN_CIENCIA',
-      correos: [{ etiqueta: 'personal', correo: 'juan.perez@example.com' }],
-      telefonos: [{ etiqueta: 'personal', numero: '555-1234' }],
-      drEspecialidadAfin: 'SI'
-    }
+    profesor_nombre: 'Juan Pérez Gómez'
   },
   {
     id: '2',

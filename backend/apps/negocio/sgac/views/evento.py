@@ -1,5 +1,6 @@
 from drf_spectacular.utils import extend_schema_view, extend_schema
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.response import Response
 
 from apps.negocio.sgac.models.evento import Evento
 from apps.negocio.sgac.views.serializers.evento import EventoSerializer
@@ -8,7 +9,7 @@ from apps.negocio.sgac.views.serializers.evento import EventoSerializer
 @extend_schema_view(
     list=extend_schema(
         tags=["Gestión de Eventos"],
-        summary="Lista los eventos.",
+        summary="Lista todos los eventos.",
     ),
     retrieve=extend_schema(
         tags=["Gestión de Eventos"],
@@ -32,7 +33,12 @@ from apps.negocio.sgac.views.serializers.evento import EventoSerializer
     ),
 )
 class EventoViewSet(viewsets.ModelViewSet):
-    queryset = Evento.objects.prefetch_related('profesorevento_set__profesor').all()
     serializer_class = EventoSerializer
+    queryset = Evento.objects.all()
     lookup_url_kwarg = "id_evento"
     lookup_field = "pk"
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

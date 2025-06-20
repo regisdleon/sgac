@@ -1,6 +1,28 @@
 import { defineStore } from 'pinia'
 import { useFetch } from '#app'
 import type { Event } from '~/models/Event'
+import type { Professors } from "~/models/Professors";
+
+// Helper function to convert snake_case keys to camelCase
+const toCamel = (s: string) => {
+  return s.replace(/([-_][a-z])/ig, ($1) => {
+	return $1.toUpperCase()
+	  .replace('-', '')
+	  .replace('_', '');
+  });
+};
+
+const keysToCamel = (o: any): any => {
+  if (Array.isArray(o)) {
+	return o.map(v => keysToCamel(v));
+  } else if (o !== null && typeof o === 'object') {
+	return Object.keys(o).reduce((acc, key) => {
+	  acc[toCamel(key)] = keysToCamel(o[key]);
+	  return acc;
+	}, {} as any);
+  }
+  return o;
+};
 
 export const useEventStore = defineStore('eventStore', {
   state: () => ({
@@ -83,12 +105,13 @@ export const useEventStore = defineStore('eventStore', {
 		  console.log('Raw events before transformation:', rawEvents);
 		  
 		  this.events = rawEvents.map((e: any) => {
-			const event = {
+			const event: Event = {
 			  id: e.id,
 			  anno: e.anno ?? e.year ?? 0,
 			  titulo: e.titulo || e.title || '',
-			  titulo_corto: e.tituloCorto || '',
+			  titulo_corto: e.titulo_corto || e.tituloCorto || '',
 			  clasificacion: e.clasificacion || e.classification?.id || e.classification || '',
+			  profesor_nombre: e.profesor_nombre || e.profesorNombre,
 			};
 			console.log('Transformed event:', event);
 			return event;
@@ -126,8 +149,9 @@ export const useEventStore = defineStore('eventStore', {
                 id: e.id,
                 anno: e.anno ?? e.year ?? 0,
                 titulo: e.titulo || e.title,
-                titulo_corto: e.tituloCorto,
+                titulo_corto: e.titulo_corto || e.tituloCorto,
                 clasificacion: e.clasificacion || e.classification?.id || e.classification,
+				profesor_nombre: e.profesor_nombre || e.profesorNombre,
             };
 		  this.currentEvent = fetchedEvent;
 		  console.log(`DEBUG: fetchEventById successful for ID: ${id}. currentEvent set.`);
@@ -167,8 +191,9 @@ export const useEventStore = defineStore('eventStore', {
                 id: e.id,
                 anno: e.anno ?? e.year ?? 0,
                 titulo: e.titulo || e.title,
-                titulo_corto: e.tituloCorto,
+                titulo_corto: e.titulo_corto || e.tituloCorto,
                 clasificacion: e.clasificacion || e.classification?.id || e.classification,
+				profesor_nombre: e.profesor_nombre || e.profesorNombre,
             };
 		  this.events.push(newEvent);
 		  return newEvent;
@@ -199,22 +224,23 @@ export const useEventStore = defineStore('eventStore', {
 		}
 		
 		const e: any = data;
-		const updated: Event = {
+		const event: Event = {
 		  id: e.id,
 		  anno: e.anno ?? e.year ?? 0,
 		  titulo: e.titulo || e.title,
-		  titulo_corto: e.tituloCorto,
+		  titulo_corto: e.titulo_corto || e.tituloCorto,
 		  clasificacion: e.clasificacion || e.classification?.id || e.classification,
+		  profesor_nombre: e.profesor_nombre || e.profesorNombre,
 		};
-		const index = this.events.findIndex(e => e.id === updated.id)
+		
+		const index = this.events.findIndex(e => e.id === event.id)
 		if (index !== -1) {
-		  this.events[index] = updated;
+		  this.events.splice(index, 1, event);
 		}
-		this.currentEvent = updated;
-		return updated;
+		return event
 	  } catch (err) {
 		this.error = err instanceof Error ? err.message : 'Error al actualizar el evento'
-		console.error(`Error updating event ${updatedEvent.id}:`, err)
+		console.error('Error updating event:', err)
 		return null
 	  } finally {
 		this.isLoading = false

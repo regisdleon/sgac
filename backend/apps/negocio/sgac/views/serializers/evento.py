@@ -3,7 +3,6 @@ from rest_framework import serializers
 from apps.negocio.sgac.models.evento import Evento
 from apps.negocio.sgac.models.profesor_evento import ProfesorEvento
 from apps.negocio.sgac.models.profesor import Profesor
-from apps.negocio.sgac.views.serializers.profesor import ProfesorSerializer
 
 
 class EventoSerializer(serializers.ModelSerializer):
@@ -11,9 +10,10 @@ class EventoSerializer(serializers.ModelSerializer):
         queryset=Profesor.objects.all(),
         required=True,
         write_only=True,
-        source='profesor'
+        source='profesor',
+        label="Profesor"
     )
-    profesor = ProfesorSerializer(read_only=True)
+    profesor_nombre = serializers.SerializerMethodField()
 
     class Meta:
         model = Evento
@@ -24,15 +24,15 @@ class EventoSerializer(serializers.ModelSerializer):
             "titulo_corto",
             "clasificacion",
             "profesor_id",
-            "profesor",
+            "profesor_nombre",
         ]
 
-    def to_representation(self, instance):
-        representation = super().to_representation(instance)
+    def get_profesor_nombre(self, instance):
         profesor_evento = instance.profesorevento_set.first()
-        if profesor_evento:
-            representation['profesor'] = ProfesorSerializer(profesor_evento.profesor).data
-        return representation
+        if profesor_evento and profesor_evento.profesor:
+            profesor = profesor_evento.profesor
+            return f"{profesor.nombre} {profesor.primer_apellido} {profesor.segundo_apellido or ''}".strip()
+        return "N/A"
 
     def create(self, validated_data):
         profesor = validated_data.pop('profesor')
